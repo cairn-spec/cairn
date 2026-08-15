@@ -1,0 +1,112 @@
+/* Cairn v0.1 — caption overlay styles.
+ * WCAG-minded defaults: ≥7:1 contrast, generous type, user-overridable via
+ * the .cairn custom properties. Nothing here is engine-specific. */
+
+.cairn {
+  --cairn-font: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --cairn-size: clamp(16px, 2.2vh, 24px);
+  --cairn-fg: #ffffff;
+  --cairn-bg: rgba(0, 0, 0, 0.78);
+  --cairn-accent: #ffd166;
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10000;
+  pointer-events: none;
+  font-family: var(--cairn-font);
+}
+
+.cairn-caption-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  padding: 0 4vw calc(2.5vh + env(safe-area-inset-bottom, 0px));
+}
+
+.cairn-caption {
+  max-width: min(72ch, 86vw);
+  font-size: var(--cairn-size);
+  line-height: 1.45;
+  color: var(--cairn-fg);
+  background: var(--cairn-bg);
+  padding: 0.35em 0.8em;
+  border-radius: 4px;
+  text-align: center;
+  white-space: pre-line;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.cairn-active .cairn-caption { opacity: 1; }
+.cairn-caption:empty { padding: 0; background: transparent; }
+
+.cairn-tick {
+  font-size: calc(var(--cairn-size) * 0.9);
+  color: var(--cairn-accent);
+  visibility: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.cairn-hint {
+  position: absolute;
+  bottom: calc(9vh + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: calc(var(--cairn-size) * 0.75);
+  font-style: italic;
+  color: var(--cairn-fg);
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.2em 0.7em;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.cairn-hint.cairn-visible { opacity: 0.9; }
+
+.cairn-controls {
+  position: fixed;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+.cairn-controls button {
+  font: 600 12px/1 var(--cairn-font);
+  color: var(--cairn-fg);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.cairn-controls button:hover,
+.cairn-controls button:focus-visible {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: var(--cairn-accent);
+  outline: none;
+}
+.cairn-toggle[aria-pressed="false"] { opacity: 0.5; text-decoration: line-through; }
+
+.cairn-transcript {
+  position: fixed;
+  right: 12px;
+  bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  width: min(38ch, 80vw);
+  max-height: 40vh;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.88);
+  color: var(--cairn-fg);
+  font-size: calc(var(--cairn-size) * 0.7);
+  line-height: 1.5;
+  padding: 0.8em 1em;
+  border-radius: 4px;
+  pointer-events: auto;
+}
+.cairn-transcript-entry { margin: 0 0 0.7em; }
+.cairn-transcript-entry:last-child { margin-bottom: 0; }
+.cairn-kind-ambience { font-style: italic; opacity: 0.75; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cairn-caption, .cairn-hint { transition: none; }
+}

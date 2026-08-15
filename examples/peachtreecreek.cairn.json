@@ -1,0 +1,69 @@
+{
+  "cairn": "0.1",
+  "scene": "peachtreecreek",
+  "defaults": {
+    "captions": "on",
+    "language": "en",
+    "oneVoiceAtATime": true,
+    "playOncePerVisit": true
+  },
+  "fragments": [
+    {
+      "id": "name",
+      "audio": ["audio/narrator_v1/name.opus", "audio/narrator_v1/name.m4a"],
+      "captions": "captions_v1/name.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "first-move" },
+      "source": { "entity": "narrator-name" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "gauge",
+      "audio": ["audio/narrator_v1/gauge.opus", "audio/narrator_v1/gauge.m4a"],
+      "captions": "captions_v1/gauge.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "waters-edge" },
+      "source": { "entity": "narrator-gauge" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "battle",
+      "audio": ["audio/narrator_v1/battle.opus", "audio/narrator_v1/battle.m4a"],
+      "captions": "captions_v1/battle.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "high-ground" },
+      "source": { "entity": "narrator-battle" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "edge",
+      "audio": ["audio/narrator_v1/edge.opus", "audio/narrator_v1/edge.m4a"],
+      "captions": "captions_v1/edge.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "crossing" },
+      "source": { "entity": "narrator-edge" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "watershed",
+      "audio": ["audio/narrator_v1/watershed.opus", "audio/narrator_v1/watershed.m4a"],
+      "captions": "captions_v1/watershed.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "vista" },
+      "source": { "entity": "narrator-watershed" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "creek-ambient",
+      "captions": "captions_v1/creek-ambient.vtt",
+      "kind": "ambience",
+      "trigger": { "type": "zone", "zone": "creek-corridor" },
+      "source": { "entity": "creek" }
+    }
+  ]
+}

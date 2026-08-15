@@ -1,0 +1,26 @@
+{
+  "words": [
+    {"word": "Welcome",   "start": 0.0,  "end": 0.5},
+    {"word": "to",        "start": 0.5,  "end": 0.65},
+    {"word": "Oakland",   "start": 0.65, "end": 1.1},
+    {"word": "Cemetery",  "start": 1.1,  "end": 1.6},
+    {"word": "Founded",   "start": 2.5,  "end": 3.0},
+    {"word": "in",        "start": 3.0,  "end": 3.15},
+    {"word": "1850",      "start": 3.15, "end": 3.6},
+    {"word": "it",        "start": 3.6,  "end": 3.75},
+    {"word": "became",    "start": 3.75, "end": 4.1},
+    {"word": "Atlanta's", "start": 4.1,  "end": 4.6},
+    {"word": "first",     "start": 4.6,  "end": 4.9},
+    {"word": "public",    "start": 4.9,  "end": 5.2},
+    {"word": "burial",    "start": 5.2,  "end": 5.6},
+    {"word": "ground",    "start": 5.6,  "end": 6.1},
+    {"word": "The",       "start": 7.0,  "end": 7.2},
+    {"word": "Victorian", "start": 7.2,  "end": 7.8},
+    {"word": "garden",    "start": 7.8,  "end": 8.2},
+    {"word": "design",    "start": 8.2,  "end": 8.6},
+    {"word": "remains",   "start": 8.6,  "end": 9.1},
+    {"word": "largely",   "start": 9.1,  "end": 9.5},
+    {"word": "unchanged", "start": 9.5,  "end": 10.0},
+    {"word": "today",     "start": 10.0, "end": 10.5}
+  ]
+}

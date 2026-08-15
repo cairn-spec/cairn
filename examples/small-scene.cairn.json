@@ -1,0 +1,40 @@
+{
+  "cairn": "0.1",
+  "scene": "small-scene-template",
+  "defaults": {
+    "captions": "on",
+    "language": "en",
+    "oneVoiceAtATime": true,
+    "playOncePerVisit": true
+  },
+  "fragments": [
+    {
+      "id": "opener",
+      "audio": ["audio/narrator_v1/opener.opus", "audio/narrator_v1/opener.m4a"],
+      "captions": "captions_v1/opener.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "first-move" },
+      "source": { "entity": "narrator-opener" }
+    },
+    {
+      "id": "second",
+      "audio": ["audio/narrator_v1/second.opus", "audio/narrator_v1/second.m4a"],
+      "captions": "captions_v1/second.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "after", "fragment": "opener", "delay": 10 },
+      "source": { "entity": "narrator-second" }
+    },
+    {
+      "id": "closer",
+      "audio": ["audio/narrator_v1/closer.opus", "audio/narrator_v1/closer.m4a"],
+      "captions": "captions_v1/closer.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "after", "fragment": "second", "delay": 10 },
+      "source": { "entity": "narrator-closer" },
+      "preemptible": false
+    }
+  ]
+}
