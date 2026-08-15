@@ -1,6 +1,6 @@
 {
   "name": "cairn-spec",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cairn \u2014 captions for spatial media. Zone-triggered, accessible captions and narration for walkable 3D scenes (gaussian splats, virtual tours) where the visitor's movement is the play head.",
   "main": "runtime/cairn.js",
   "files": [
@@ -27,7 +27,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cairn-js/cairn.git"
+    "url": "git+https://github.com/cairn-spec/cairn.git"
   },
-  "homepage": "https://github.com/cairn-js/cairn#readme"
+  "homepage": "https://github.com/cairn-spec/cairn#readme"
 }
