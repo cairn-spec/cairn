@@ -14,12 +14,44 @@ audio behavior; captions are an additive layer.
   captions_v1/*.vtt                  (one per fragment — Steve's side generates)
   cairn.json                       (manifest — see examples/peachtreecreek.cairn.json)
   cairn.js + cairn.css           (runtime, immutable-cacheable)
+  asm-html-audio.js + asm.css     (optional ASM sequential-scene host)
 ```
 
 Caption files follow the same versioning rule as audio: revisions go to
 `captions_v2/`, never overwrite.
 
-## Wiring (one scene script)
+## ASM sequential scenes — validated Bell Tower path
+
+Oakland Bell Tower is the first deployed Cairn-family pilot. It runs inside a
+PlayCanvas-rendered splat scene but deliberately uses one HTML Audio element,
+not PlayCanvas sound slots. The reusable integration in
+`integrations/asm-html-audio.js` carries forward the production-proven mobile
+audio unlock, Opus/AAC selection, cue-boundary resume, mute, replay, and
+fail-soft caption behavior:
+
+```html
+<link rel="stylesheet" href="cairn.css">
+<link rel="stylesheet" href="asm.css">
+<script src="cairn.js"></script>
+<script src="asm-html-audio.js"></script>
+<script>
+CairnAsm.mount({
+  manifestUrl: "./cairn.json",
+  volume: 0.8,
+  resetParams: ["cairnReset", "waysideReset"]
+}).then(controller => {
+  window.__cairn = controller; // optional QA hook
+});
+</script>
+```
+
+This host is the preferred ASM path for small `first-move` + `after` scenes.
+It migrates legacy `wayside.<scene>` and `asm.wayside.muted` state by copying
+it forward without deleting rollback state. ASM intentionally hides the
+generic transcript panel; captions, CC, and sound/replay are its visible
+presentation.
+
+## Direct PlayCanvas sound-slot wiring (one scene script)
 
 ```js
 // 1. Boot
@@ -70,8 +102,10 @@ the audio clock takes over automatically once the slot is actually playing.
 
 The engine owns: default-on state, toggle persistence, one-voice-at-a-time
 queueing, walk-away cue completion, play-once-per-visit, partial re-offer,
-transcript accumulation, direction ticks. The scene owns: zone geometry,
-audio playback/fades, and calling the three methods above. If a behavior
+cue-boundary resume, transcript accumulation, and direction ticks. The scene
+owns: zone geometry, audio playback/fades, and calling the three methods above.
+Call `engine.rememberProgress()` during page hide, and use the public
+`engine.resetVisit()` API for an explicit replay control. If a behavior
 seems missing, extend Cairn — don't fork caption logic into the scene.
 
 ## Registry hooks (for the necklace structure, later)
@@ -89,6 +123,8 @@ these — no additional caption-side work is needed to support it.
 - [ ] Two overlapping zones: second fragment queues with hint line, never
       interleaves
 - [ ] CC toggle persists across reload (localStorage `cairn.<scene>`)
-- [ ] Transcript panel accumulates and scrolls; ambience entries italic
+- [ ] Legacy `wayside.<scene>` state copies forward without being deleted
+- [ ] Generic integrations: transcript panel accumulates and scrolls
+- [ ] ASM integrations: no transcript control or panel is exposed
 - [ ] VoiceOver/NVDA announce cue text (ARIA live region)
 - [ ] Contrast ≥ 7:1 at default styles on the brightest scene background

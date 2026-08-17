@@ -269,4 +269,107 @@ test("positionalPreempts:false disables preemption scene-wide", () => {
   assert.deepEqual(eng.queue, ["gauge"]);
 });
 
+// ── Bell Tower production-hardening regressions ──────────────────────────────
+
+test("legacy Wayside state migrates forward without deleting rollback state", () => {
+  const values = {
+    "wayside.legacy-scene": JSON.stringify({
+      captions: false,
+      played: { opener: "complete" },
+      resume: { id: "second", at: 2.5 },
+      lastSeen: 100
+    })
+  };
+  const storage = {
+    getItem: key => values[key] ?? null,
+    setItem: (key, value) => { values[key] = value; }
+  };
+  const m = {
+    cairn: "0.1",
+    scene: "legacy-scene",
+    defaults: { visitResetHours: 12 },
+    fragments: [{ id: "opener", trigger: { type: "first-move" } }]
+  };
+  const eng = new Cairn.Engine(m, { clock: () => null },
+    { storage, now: () => 101 });
+  assert.equal(eng.captionsOn(), false);
+  assert.equal(eng.store.playedState("opener"), "complete");
+  assert.ok(values["cairn.legacy-scene"], "Cairn copy created");
+  assert.ok(values["wayside.legacy-scene"], "legacy key preserved");
+});
+
+test("cue-boundary progress resumes the unfinished fragment", () => {
+  const values = {};
+  const storage = {
+    getItem: key => values[key] ?? null,
+    setItem: (key, value) => { values[key] = value; }
+  };
+  let wall = 0;
+  const adapter = { clock: () => null, bearing: () => null };
+  const first = new Cairn.Engine(chainManifest, adapter,
+    { storage, now: () => wall });
+  first.loadCues("opener", vtt);
+  first.notifyMovement();
+  wall = 3;
+  first.tick();
+  first.rememberProgress();
+  assert.deepEqual(first.store.data.resume, { id: "opener", at: 2.5 });
+
+  wall = 4;
+  const resumed = new Cairn.Engine(chainManifest, adapter,
+    { storage, now: () => wall });
+  resumed.loadCues("opener", vtt);
+  resumed.notifyMovement();
+  assert.equal(resumed.active.frag.id, "opener");
+  assert.equal(resumed.active.resumeAt, 2.5);
+});
+
+test("resetVisit clears scene playback state through the public API", () => {
+  const { eng } = makeChainEngine();
+  eng.notifyMovement();
+  eng.store.data.played.opener = "complete";
+  eng.store.data.resume = { id: "second", at: 0 };
+  eng.resetVisit();
+  assert.deepEqual(eng.store.data.played, {});
+  assert.equal(eng.store.data.resume, null);
+  assert.equal(eng.active, null);
+  assert.equal(eng._moved, false);
+});
+
+test("caption toggle redraws the current cue immediately", () => {
+  const { eng, tick } = makeEngine();
+  eng.enterZone("waters-edge");
+  tick(1);
+  let rendered = "not-called";
+  eng._render = view => { rendered = view; };
+  eng.toggle();
+  assert.equal(rendered.cue.text, "Welcome to Oakland Cemetery");
+});
+
+test("HTML Audio adapter can hold captions until playback starts", () => {
+  const audio = {
+    paused: true,
+    currentTime: 0,
+    addEventListener: () => {}
+  };
+  const gated = new Cairn.HtmlAudioAdapter({ wallClockBeforePlayback: false });
+  gated.register("opener", audio);
+  assert.equal(gated.clock("opener"), 0);
+  const preGesture = new Cairn.HtmlAudioAdapter();
+  preGesture.register("opener", audio);
+  assert.equal(preGesture.clock("opener"), null);
+});
+
+test("caption start checkpoints resume without a lifecycle event", () => {
+  const { eng, tick } = makeEngine();
+  eng.enterZone("waters-edge");
+  tick(3);
+  assert.deepEqual(eng.store.data.resume, { id: "gauge", at: 2.5 });
+
+  // A later cue gap must not make rememberProgress fall back to fragment start.
+  tick(6.2);
+  eng.rememberProgress();
+  assert.deepEqual(eng.store.data.resume, { id: "gauge", at: 2.5 });
+});
+
 console.log(`\n${passed} tests passed`);

@@ -27,11 +27,16 @@ tools/
 runtime/
   cairn.js          engine-agnostic core + HtmlAudio & PlayCanvas adapters
   cairn.css         WCAG-minded overlay styles
-  test_cairn.mjs    12 node tests over the normative behaviors
+  test_cairn.mjs    22 node tests over core + Bell pilot regressions
+integrations/
+  asm-html-audio.js  reusable ASM browser-audio/gesture/replay host
+  asm.css            ASM controls + responsive caption safe zones
+  test_asm_host.mjs  audio-source selection tests
 demo/
   index.html          double-click demo: zones as buttons, real pipeline output
 examples/
-  peachtreecreek.cairn.json   real manifest for the first live scene
+  oaklandbelltower.cairn.json deployed sequential-pilot manifest
+  peachtreecreek.cairn.json   spatial-zone / PlayCanvas target manifest
 INTEGRATION.md        engine-side wiring guide (PlayCanvas first)
 writeup/              the public announcement draft
 ```
@@ -57,9 +62,11 @@ against any engine and the spec's behaviors come for free.
 
 ## Status
 
-v0.1 draft. Proven: authoring pipeline (58 tests), core behaviors (12 node
-tests), file-URL demo. Not yet proven: in-engine PlayCanvas adapter against
-a live splat scene (first target: Peachtree Creek), WebXR presentation,
-multi-language manifests.
+v0.1 draft. Proven: authoring pipeline (58 tests), core behaviors and Bell
+pilot regressions (22 node tests), three ASM host tests, file-URL demo, and
+the sequential HTML Audio integration in the live Oakland Bell Tower
+PlayCanvas-rendered splat scene. Not yet proven: direct PlayCanvas sound-slot
+adapter with positional zones (first target: Peachtree Creek), WebXR
+presentation, multi-language manifests.
 
 MIT (intended) — spec, runtime, and tools together.

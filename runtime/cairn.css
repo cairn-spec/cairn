@@ -8,6 +8,11 @@
   --cairn-fg: #ffffff;
   --cairn-bg: rgba(0, 0, 0, 0.78);
   --cairn-accent: #ffd166;
+  --cairn-caption-inline-start: 4vw;
+  --cairn-caption-inline-end: 4vw;
+  --cairn-caption-bottom: calc(2.5vh + env(safe-area-inset-bottom, 0px));
+  --cairn-caption-max-width: min(72ch, 86vw);
+  --cairn-caption-align: center;
   position: fixed;
   inset: auto 0 0 0;
   z-index: 10000;
@@ -20,18 +25,19 @@
   align-items: center;
   justify-content: center;
   gap: 0.6em;
-  padding: 0 4vw calc(2.5vh + env(safe-area-inset-bottom, 0px));
+  padding: 0 var(--cairn-caption-inline-end) var(--cairn-caption-bottom)
+    var(--cairn-caption-inline-start);
 }
 
 .cairn-caption {
-  max-width: min(72ch, 86vw);
+  max-width: var(--cairn-caption-max-width);
   font-size: var(--cairn-size);
   line-height: 1.45;
   color: var(--cairn-fg);
   background: var(--cairn-bg);
   padding: 0.35em 0.8em;
   border-radius: 4px;
-  text-align: center;
+  text-align: var(--cairn-caption-align);
   white-space: pre-line;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
   opacity: 0;

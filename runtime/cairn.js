@@ -92,11 +92,18 @@
 
   function Store(sceneId, storage) {
     this.key = "cairn." + sceneId;
+    this.legacyKey = "wayside." + sceneId;
     this.storage = storage || (typeof localStorage !== "undefined" ? localStorage : null);
     this.data = { captions: null, played: {} };
     if (this.storage) {
       try {
         var raw = this.storage.getItem(this.key);
+        if (!raw) {
+          // Copy legacy state forward once. Keep the Wayside key intact so a
+          // rollback to the deployed pilot remains lossless.
+          raw = this.storage.getItem(this.legacyKey);
+          if (raw) this.storage.setItem(this.key, raw);
+        }
         if (raw) this.data = JSON.parse(raw);
       } catch (e) { /* fresh state on parse failure */ }
     }
@@ -137,6 +144,7 @@
     if (resetH && this.store.data.lastSeen &&
         (this._now() - this.store.data.lastSeen) > resetH * 3600) {
       this.store.data.played = {};
+      this.store.data.resume = null;
     }
     this.store.data.lastSeen = this._now();
     this.store.save();
@@ -160,8 +168,26 @@
   Engine.prototype.toggle = function () {
     this.store.data.captions = !this.store.data.captions;
     this.store.save();
-    this._render(null);
+    var view = (this.active && this.active.lastCue)
+      ? { frag: this.active.frag, cue: this.active.lastCue }
+      : null;
+    this._render(view);
     return this.store.data.captions;
+  };
+
+  // Reset only this scene's visit state. Audio playback remains host-owned;
+  // callers can stop/rewind their adapter before notifying movement again.
+  Engine.prototype.resetVisit = function () {
+    this.store.data.played = {};
+    this.store.data.resume = null;
+    this.store.data.lastSeen = this._now();
+    this.store.save();
+    this.active = null;
+    this.queue = [];
+    this._pending = [];
+    this._moved = false;
+    this._render(null);
+    return this;
   };
 
   // Trigger dispatch — the spatial layer.
@@ -180,10 +206,24 @@
     if (this._moved) return;
     this._moved = true;
     var frags = this.manifest.fragments || [];
+    var resume = this.store.data.resume;
+    if (resume && this._eligible(this.fragments[resume.id])) {
+      this._start(this.fragments[resume.id], resume.at);
+      return;
+    }
     for (var i = 0; i < frags.length; i++) {
       var t = frags[i].trigger;
       if (t && t.type === "first-move" && this._eligible(frags[i])) {
         this._startOrQueue(frags[i]);
+      }
+    }
+    // Recover state written before cue-boundary resume existed.
+    if (!this.active && !this.queue.length) {
+      for (var j = 0; j < frags.length; j++) {
+        if (this._eligible(frags[j])) {
+          this._start(frags[j], 0);
+          break;
+        }
       }
     }
   };
@@ -240,13 +280,17 @@
     return null;
   };
 
-  Engine.prototype._start = function (frag) {
+  Engine.prototype._start = function (frag, resumeAt) {
+    var at = Math.max(0, Number(resumeAt) || 0);
     this.active = {
       frag: frag,
-      startedAt: this._now(),
+      startedAt: this._now() - at,
+      resumeAt: at,
       dismissAfterCue: false,
       lastCue: null
     };
+    this.store.data.resume = { id: frag.id, at: at };
+    this.store.save();
     if (this.adapter.onAudioEnd) {
       var self = this;
       this.adapter.onAudioEnd(frag.id, function () {
@@ -259,27 +303,56 @@
 
   Engine.prototype._finish = function (state) {
     if (!this.active) return;
-    var finishedId = this.active.frag.id;
+    var finished = this.active;
+    var finishedId = finished.frag.id;
     this.store.markPlayed(finishedId, state);
     this.active = null;
     this._render(null);
 
     // Sequential chains: schedule any `after` fragments keyed to this one.
     var frags = this.manifest.fragments || [];
+    var followId = null;
     for (var i = 0; i < frags.length; i++) {
       var t = frags[i].trigger;
       if (t && t.type === "after" && t.fragment === finishedId &&
           this._eligible(frags[i])) {
         var delay = (typeof t.delay === "number") ? t.delay : 10;
         this._pending.push({ id: frags[i].id, at: this._now() + delay });
+        if (!followId) followId = frags[i].id;
       }
     }
 
+    if (state === "complete") {
+      var nextId = this.queue.length ? this.queue[0] : followId;
+      this.store.data.resume = nextId ? { id: nextId, at: 0 } : null;
+    } else {
+      var cueStart = finished.lastCue ? finished.lastCue.start : finished.resumeAt;
+      this.store.data.resume = { id: finishedId, at: Math.max(0, cueStart || 0) };
+    }
+    this.store.save();
+
     if (this.queue.length) {
-      var nextId = this.queue.shift();
-      var frag = this.fragments[nextId];
+      var queuedId = this.queue.shift();
+      var frag = this.fragments[queuedId];
       if (frag) this._start(frag);
     }
+  };
+
+  // Persist a return point at a sentence/caption boundary. Hosts call this on
+  // pagehide or when the document is backgrounded.
+  Engine.prototype.rememberProgress = function () {
+    if (this.active) {
+      var cue = this.active.lastCue;
+      var at = cue ? cue.start : this.active.resumeAt;
+      this.store.data.resume = {
+        id: this.active.frag.id,
+        at: Math.max(0, Number(at) || 0)
+      };
+    } else if (this._pending.length) {
+      this.store.data.resume = { id: this._pending[0].id, at: 0 };
+    }
+    this.store.data.lastSeen = this._now();
+    this.store.save();
   };
 
   // Per-frame drive — the temporal layer.
@@ -318,6 +391,15 @@
     if (cue !== this.active.lastCue) {
       if (this.active.lastCue) this._log(frag, this.active.lastCue);
       this.active.lastCue = cue;
+      if (cue) {
+        // Persist at the moment a caption begins. Mobile browsers do not
+        // guarantee pagehide/visibilitychange during every reload or eviction,
+        // so lifecycle-only checkpoints can lose the first interrupted cue.
+        this.active.resumeAt = cue.start;
+        this.store.data.resume = { id: frag.id, at: cue.start };
+        this.store.data.lastSeen = this._now();
+        this.store.save();
+      }
       this._render(cue ? { frag: frag, cue: cue } : null);
     }
 
@@ -438,10 +520,12 @@
 
   // ── HtmlAudioAdapter — reference adapter for plain <audio> (and the demo) ──
 
-  function HtmlAudioAdapter() {
+  function HtmlAudioAdapter(opts) {
+    opts = opts || {};
     this.audio = {};        // fragmentId -> HTMLAudioElement
     this.bearings = {};     // entityName -> degrees (host-updated)
     this._endCbs = {};
+    this.wallClockBeforePlayback = opts.wallClockBeforePlayback !== false;
   }
   HtmlAudioAdapter.prototype.register = function (fragmentId, audioEl) {
     this.audio[fragmentId] = audioEl;
@@ -452,7 +536,10 @@
   };
   HtmlAudioAdapter.prototype.clock = function (fragmentId) {
     var a = this.audio[fragmentId];
-    if (!a || a.paused && a.currentTime === 0) return null; // pre-gesture
+    if (!a) return null;
+    if (a.paused && a.currentTime === 0) {
+      return this.wallClockBeforePlayback ? null : 0;
+    }
     return a.currentTime;
   };
   HtmlAudioAdapter.prototype.bearing = function (entityName) {
