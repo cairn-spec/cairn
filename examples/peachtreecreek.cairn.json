@@ -5,7 +5,8 @@
     "captions": "on",
     "language": "en",
     "oneVoiceAtATime": true,
-    "playOncePerVisit": true
+    "playOncePerVisit": true,
+    "positionalQueue": "persistent"
   },
   "fragments": [
     {

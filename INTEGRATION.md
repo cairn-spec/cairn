@@ -51,6 +51,16 @@ it forward without deleting rollback state. ASM intentionally hides the
 generic transcript panel; captions, CC, and sound/replay are its visible
 presentation.
 
+### Shared HTML audio ownership
+
+The ASM host intentionally reuses one `<audio>` element while changing its
+source between fragments. A shared player must have one physical `ended`
+listener, and that event must be routed only to the fragment currently owning
+playback. Never attach one unscoped `ended` listener per logical fragment to the
+same player: a single event can otherwise finish the current fragment, start
+the next queued fragment, then immediately finish that new fragment through a
+second listener. Cairn's `HtmlAudioAdapter` performs this identity routing.
+
 ## Direct PlayCanvas sound-slot wiring (one scene script)
 
 ```js
@@ -94,6 +104,25 @@ floor at the current cue boundary — never mid-sentence. Protect authored
 moments (endings) with `"preemptible": false`; disable scene-wide with
 `"defaults": {"positionalPreempts": false}`.
 
+**Persistent traversal contract:** when discovering a zone should commit its
+narration even after the visitor walks on, set
+`"defaults": {"positionalQueue": "persistent"}`. Entries latch FIFO, the
+current narration finishes, and `leaveZone()` does not cancel queued or active
+fragments. This is useful for closely spaced cues in corridor scenes; do not
+use it for object-presence experiences that should stop on walk-away.
+
+**Exceptional object encounter contract:** when one authored location must
+temporarily interrupt a sequential program and then return the visitor to the
+exact point they left, do not emulate this with queue reordering or partial
+preemption. Fade the current player down, capture its exact playback clock, and
+call `engine.interruptWith("lantern", { at: currentTime })`. Play the exceptional
+fragment fully, then follow the engine's restored `active` fragment and
+`resumeAt` clock, fading that audio back in. If the encounter occurs during an
+`after` delay, Cairn pauses and restores the remaining delay automatically.
+The suspended fragment, queue, and delay state persist across reloads. The ASM
+HTML-audio host exposes the complete fade/state operation as
+`controller.interruptWith(id, { fadeOutMs, fadeInMs })`.
+
 Call `enterZone` even when audio cannot start yet (pre-unlock): the engine
 runs cues on a wall clock so captions begin before the autoplay gesture, and
 the audio clock takes over automatically once the slot is actually playing.
@@ -122,6 +151,14 @@ these — no additional caption-side work is needed to support it.
       finishes, then dismisses; fragment re-offers on re-entry
 - [ ] Two overlapping zones: second fragment queues with hint line, never
       interleaves
+- [ ] Persistent queue scene: enter and leave two zones while another fragment
+      plays; both remain queued FIFO and each narration finishes completely
+- [ ] Shared audio player: with one fragment active and two queued, one physical
+      `ended` event starts only the first queued fragment and leaves the second
+      queued
+- [ ] Exceptional encounter: active narration fades down, exceptional narration
+      plays once, and the interrupted narration resumes at its saved clock with
+      captions synchronized; repeat while in an `after` gap and across reload
 - [ ] CC toggle persists across reload (localStorage `cairn.<scene>`)
 - [ ] Legacy `wayside.<scene>` state copies forward without being deleted
 - [ ] Generic integrations: transcript panel accumulates and scrolls

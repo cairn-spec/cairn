@@ -110,6 +110,10 @@ Notes:
 - `interruption`: `complete-cue` (default — audio fades on walk-away but the
   visible cue finishes before dismissing; comprehension beats sync) |
   `cut` | `finish-fragment`.
+- `defaults.positionalQueue`: `presence` (default) | `persistent`. In
+  `persistent` mode, entering a zone latches its fragment into a FIFO queue;
+  the current fragment finishes, leaving the zone does not withdraw the
+  latched fragment, and positional preemption is disabled for that scene.
 - Audio is optional everywhere. **A Cairn scene with every speaker muted
   is still a complete experience.** This is the accessibility inversion that
   matters: text is the primary track, audio is the enhancement.
@@ -146,12 +150,37 @@ Notes:
    (endings, dedications); non-preemptible playback queues the incoming
    fragment instead. Scenes may disable preemption globally with
    `"defaults": {"positionalPreempts": false}`.
-7. **Walk-away and re-entry.** Partial plays are recorded. Re-entry behavior
+7. **Persistent positional queueing.** Traversal scenes MAY set
+   `"defaults": {"positionalQueue": "persistent"}` when crossing a zone
+   should be remembered as an event rather than treated as temporary presence.
+   Zone entries latch in FIFO order; the current fragment and every latched
+   fragment finish completely; leaving a zone neither cancels a queued fragment
+   nor dismisses an active one. This policy supersedes positional preemption
+   and zone-exit interruption while active, but leaves other scenes' default
+   presence-based behavior unchanged.
+8. **Audio completion identity.** An adapter's
+   `onAudioEnd(fragmentId, callback)` signal MUST be scoped to the logical
+   fragment that actually ended. When multiple fragments reuse one underlying
+   audio element, sound slot, or player, one physical completion event MUST
+   advance at most one logical fragment. Adapters MUST route completion through
+   the currently playing fragment identity; they MUST NOT fan the same event
+   out to every fragment registered on the shared player.
+9. **Exceptional suspend/resume.** A scene MAY call
+   `engine.interruptWith(fragmentId, {at})` for a singular authored encounter
+   that must temporarily take the floor (for example, narration attached to a
+   specific object). Cairn snapshots the active fragment at the adapter's exact
+   clock, the FIFO queue, and any remaining `after` delays. When the interruptor
+   completes, Cairn restores that state: the displaced fragment resumes at the
+   saved clock, or a paused delay resumes with its remaining duration. The
+   snapshot MUST persist across reload and lifecycle suspension. Hosts own the
+   audio fade-out/fade-in around this state transition; ordinary zone entry MUST
+   continue to use the normal preemption or persistent-queue policies above.
+10. **Walk-away and re-entry.** Partial plays are recorded. Re-entry behavior
    follows `playOncePerVisit`; a partially-heard fragment re-offers itself.
-8. **The transcript log.** Every completed cue accumulates into a readable,
+11. **The transcript log.** Every completed cue accumulates into a readable,
    scrollable record for the session — captions as document, not vapor.
    Scenes MAY surface this as a diegetic object (a registry, a logbook).
-9. **No time pressure.** Cues never advance faster than reading speed
+12. **No time pressure.** Cues never advance faster than reading speed
    (~17 cps ceiling), and the visitor pausing movement never kills a cue.
    WCAG 2.2.x: timing is adjustable by the nature of the medium.
 

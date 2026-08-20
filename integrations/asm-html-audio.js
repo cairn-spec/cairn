@@ -43,6 +43,36 @@
     return null;
   }
 
+  function createResumeClockGate(clock) {
+    var held = null;
+    return {
+      hold: function (fragmentId, at) {
+        held = { id: fragmentId, at: Math.max(0, Number(at) || 0) };
+      },
+      release: function (fragmentId) {
+        if (!fragmentId || (held && held.id === fragmentId)) held = null;
+      },
+      clock: function (fragmentId) {
+        if (held && held.id === fragmentId) {
+          var actual = clock(fragmentId);
+          if (Number.isFinite(actual) && Math.abs(actual - held.at) <= 0.35) {
+            held = null;
+            return actual;
+          }
+          return held.at;
+        }
+        return clock(fragmentId);
+      },
+      held: function () { return held; }
+    };
+  }
+
+  function hasUnfinishedResume(engine) {
+    var resume = engine && engine.store && engine.store.data.resume;
+    if (!resume || !engine.fragments[resume.id]) return false;
+    return engine.store.playedState(resume.id) !== "complete";
+  }
+
   function consumeResetParams(win, params, resetParams) {
     resetParams.forEach(function (key) { params.delete(key); });
     var query = params.toString();
@@ -97,13 +127,18 @@
     audio.id = options.audioId || "cairn-narrator";
     audio.preload = options.preload || "auto";
     audio.playsInline = true;
-    audio.volume = options.volume === undefined ? 0.8 : options.volume;
+    var baseVolume = options.volume === undefined ? 0.8 : options.volume;
+    audio.volume = baseVolume;
     audio.hidden = true;
     doc.body.appendChild(audio);
 
     var adapter = new Cairn.HtmlAudioAdapter({
       wallClockBeforePlayback: false
     });
+    var resumeClock = createResumeClockGate(
+      adapter.clock.bind(adapter)
+    );
+    adapter.clock = resumeClock.clock;
     manifest.fragments.forEach(function (fragment) {
       adapter.register(fragment.id, audio);
     });
@@ -112,6 +147,7 @@
       options.parent || doc.body
     );
     engine.dom.wrap.classList.add("cairn-asm");
+    var resumeNeedsTap = hasUnfinishedResume(engine);
 
     // ASM intentionally presents captions without an in-scene transcript UI.
     if (engine.dom.transcriptBtn) engine.dom.transcriptBtn.hidden = true;
@@ -130,6 +166,34 @@
     var primedId = null;
     var disposed = false;
     var frameId = null;
+    var volumeTweenToken = 0;
+    var interruptionPromise = null;
+
+    function fadeVolume(target, durationMs) {
+      var token = ++volumeTweenToken;
+      var from = audio.volume;
+      var duration = Math.max(0, Number(durationMs) || 0);
+      if (!duration) {
+        audio.volume = target;
+        return Promise.resolve(true);
+      }
+      var started = win.performance && typeof win.performance.now === "function"
+        ? win.performance.now() : Date.now();
+      return new Promise(function (resolve) {
+        function step(now) {
+          if (token !== volumeTweenToken || disposed) {
+            resolve(false);
+            return;
+          }
+          var elapsed = (Number(now) || Date.now()) - started;
+          var t = Math.max(0, Math.min(1, elapsed / duration));
+          audio.volume = from + (target - from) * t;
+          if (t < 1) win.requestAnimationFrame(step);
+          else resolve(true);
+        }
+        win.requestAnimationFrame(step);
+      });
+    }
 
     function complete() {
       var fragments = manifest.fragments || [];
@@ -148,14 +212,18 @@
       var replay = complete();
       muteButton.textContent = audio.muted
         ? "Sound off"
-        : (replay ? "Replay narration"
-          : (blocked ? "Tap for sound"
-            : (waiting ? "Start audio" : "Sound on")));
+        : resumeNeedsTap ? "Resume audio"
+        : replay ? "Replay narration"
+        : blocked ? "Tap for sound"
+        : waiting ? "Start audio"
+        : "Sound on";
       muteButton.setAttribute("aria-pressed", String(audio.muted));
       var label = audio.muted
         ? "Unmute narration"
-        : (replay ? "Replay narration"
-          : ((blocked || waiting) ? "Start narration" : "Mute narration"));
+        : resumeNeedsTap ? "Resume narration"
+        : replay ? "Replay narration"
+        : (blocked || waiting) ? "Start narration"
+        : "Mute narration";
       muteButton.setAttribute("aria-label", label);
       muteButton.title = label;
     }
@@ -184,13 +252,33 @@
       markAudioState("preloading");
     }
 
-    function seek(resumeAt) {
-      if (!(resumeAt > 0)) return;
+    function seek(fragmentId, resumeAt) {
+      if (!(resumeAt > 0)) {
+        resumeClock.release(fragmentId);
+        return;
+      }
+      resumeClock.hold(fragmentId, resumeAt);
       function apply() {
         var limit = Number.isFinite(audio.duration)
           ? Math.max(0, audio.duration - 0.05)
           : resumeAt;
-        audio.currentTime = Math.min(resumeAt, limit);
+        var target = Math.min(resumeAt, limit);
+        try {
+          audio.currentTime = target;
+          if (audio.seeking) {
+            audio.addEventListener("seeked", function () {
+              resumeClock.release(fragmentId);
+            }, { once: true });
+          } else {
+            resumeClock.release(fragmentId);
+          }
+        } catch (error) {
+          resumeClock.release(fragmentId);
+          if (options.debug) {
+            console.error("[Cairn ASM] Resume seek failed for " + fragmentId,
+              error);
+          }
+        }
       }
       if (audio.readyState >= 1) apply();
       else audio.addEventListener("loadedmetadata", apply, { once: true });
@@ -227,7 +315,10 @@
                 candidate.trigger.type === "first-move";
             })
           : null;
-        var next = pending || opener;
+        var resume = resumeNeedsTap && engine.store.data.resume
+          ? engine.fragments[engine.store.data.resume.id]
+          : null;
+        var next = pending || resume || opener;
         if (next) {
           prime(next);
           return;
@@ -253,6 +344,12 @@
         return;
       }
 
+      var resumed = engine._resumedFromInterruption &&
+        engine._resumedFromInterruption.id === fragment.id;
+      if (resumed) {
+        engine._resumedFromInterruption = null;
+        audio.volume = 0;
+      }
       audio.pause();
       playingId = fragment.id;
       failedId = null;
@@ -263,9 +360,53 @@
         audio.src = url;
         audio.load();
       }
-      seek(resumeAt);
+      seek(fragment.id, resumeAt);
       markAudioState("starting");
       attemptPlayback(fragment);
+      if (resumed) {
+        fadeVolume(baseVolume,
+          options.interruptionResumeFadeMs === undefined
+            ? 1000 : options.interruptionResumeFadeMs);
+      }
+    }
+
+    function interruptWith(fragmentId, interruptionOptions) {
+      interruptionOptions = interruptionOptions || {};
+      if (interruptionPromise || engine.suspended ||
+          engine.store.playedState(fragmentId) === "complete") {
+        return Promise.resolve(false);
+      }
+      var expectedId = engine.active && engine.active.frag.id;
+      var shouldFade = !!expectedId && !audio.paused && !audio.ended;
+      var fadeOutMs = interruptionOptions.fadeOutMs === undefined
+        ? 1500 : interruptionOptions.fadeOutMs;
+      var fadeInMs = interruptionOptions.fadeInMs === undefined
+        ? 650 : interruptionOptions.fadeInMs;
+
+      interruptionPromise = (shouldFade
+        ? fadeVolume(0, fadeOutMs) : Promise.resolve(true))
+        .then(function () {
+          if (expectedId && (!engine.active ||
+              engine.active.frag.id !== expectedId)) {
+            audio.volume = baseVolume;
+            return false;
+          }
+          var at = expectedId && Number.isFinite(Number(audio.currentTime))
+            ? Number(audio.currentTime) : undefined;
+          audio.pause();
+          if (!engine.interruptWith(fragmentId, { at: at })) {
+            audio.volume = baseVolume;
+            return false;
+          }
+          audio.volume = 0;
+          syncAudio(true);
+          return fadeVolume(baseVolume, fadeInMs).then(function () {
+            return true;
+          });
+        }).finally(function () {
+          interruptionPromise = null;
+        });
+      return interruptionPromise;
     }
 
     function replay() {
@@ -278,6 +419,15 @@
 
     function onSoundClick() {
       var blocked = engine.dom.wrap.dataset.audioState === "blocked";
+      if (resumeNeedsTap) {
+        resumeNeedsTap = false;
+        audio.muted = false;
+        storage.setItem(muteKey, "false");
+        engine.notifyMovement();
+        syncAudio(true);
+        renderSoundButton();
+        return;
+      }
       if (!audio.muted && complete()) {
         replay();
         return;
@@ -315,6 +465,10 @@
 
     function notifyMovement(event) {
       if (!isViewerGesture(event)) return;
+      if (resumeNeedsTap) {
+        renderSoundButton();
+        return;
+      }
       engine.notifyMovement();
       // Keep play() inside the user-gesture call stack for mobile unlock.
       syncAudio(true);
@@ -348,8 +502,8 @@
 
     function frame() {
       if (disposed) return;
-      engine.tick();
       syncAudio();
+      engine.tick();
 
       // If neither encode can play, captions still finish on wall time.
       if (failedId && engine.active && engine.active.frag.id === failedId) {
@@ -370,6 +524,8 @@
       audio: audio,
       replay: replay,
       syncAudio: syncAudio,
+      interruptWith: interruptWith,
+      get resumeNeedsTap() { return resumeNeedsTap; },
       dispose: function () {
         disposed = true;
         if (frameId !== null) win.cancelAnimationFrame(frameId);
@@ -393,6 +549,8 @@
   return {
     mount: mount,
     firstPlayable: firstPlayable,
-    consumeResetParams: consumeResetParams
+    consumeResetParams: consumeResetParams,
+    createResumeClockGate: createResumeClockGate,
+    hasUnfinishedResume: hasUnfinishedResume
   };
 });

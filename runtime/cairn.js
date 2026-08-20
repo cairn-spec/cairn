@@ -145,11 +145,14 @@
         (this._now() - this.store.data.lastSeen) > resetH * 3600) {
       this.store.data.played = {};
       this.store.data.resume = null;
+      this.store.data.suspended = null;
     }
     this.store.data.lastSeen = this._now();
     this.store.save();
     this.active = null;        // {frag, startedAt(wall), partial}
     this.queue = [];
+    this.suspended = this.store.data.suspended || null;
+    this._resumedFromInterruption = null;
     this.transcript = [];
     this.dom = null;
     this._pending = [];        // scheduled `after` fragments: {id, at}
@@ -180,10 +183,13 @@
   Engine.prototype.resetVisit = function () {
     this.store.data.played = {};
     this.store.data.resume = null;
+    this.store.data.suspended = null;
     this.store.data.lastSeen = this._now();
     this.store.save();
     this.active = null;
     this.queue = [];
+    this.suspended = null;
+    this._resumedFromInterruption = null;
     this._pending = [];
     this._moved = false;
     this._render(null);
@@ -232,6 +238,16 @@
     var frag = this._fragmentForZone(zoneId);
     if (!this._eligible(frag)) return;
     if (this.active && this.defaults.oneVoiceAtATime !== false) {
+      var persistentQueue = this.defaults.positionalQueue === "persistent";
+      if (persistentQueue) {
+        // A zone crossing is a durable event rather than a temporary claim on
+        // playback. Preserve FIFO order and let the current fragment finish.
+        if (this.queue.indexOf(frag.id) < 0) {
+          this.queue.push(frag.id);
+          this._hint(frag);
+        }
+        return;
+      }
       var canPreempt = this.defaults.positionalPreempts !== false &&
                        this.active.frag.preemptible !== false;
       if (canPreempt) {
@@ -258,9 +274,87 @@
     }
   };
 
+  // Temporarily give an exceptional fragment the floor, then restore the
+  // interrupted fragment (or remaining sequential gap) after it completes.
+  // Audio fading remains host-owned; pass the adapter's exact playback clock in
+  // opts.at after fade-out.
+  Engine.prototype.interruptWith = function (fragmentId, opts) {
+    opts = opts || {};
+    var frag = this.fragments[fragmentId];
+    if (!this._eligible(frag) || this.suspended) return false;
+
+    var now = this._now();
+    var activeSnapshot = null;
+    if (this.active) {
+      var at = Number(opts.at);
+      if (!Number.isFinite(at)) {
+        var clock = this.adapter.clock
+          ? this.adapter.clock(this.active.frag.id) : null;
+        at = clock === null || clock === undefined
+          ? Math.max(0, now - this.active.startedAt)
+          : Number(clock);
+      }
+      activeSnapshot = {
+        id: this.active.frag.id,
+        at: Math.max(0, Number(at) || 0)
+      };
+    }
+
+    this.suspended = {
+      by: fragmentId,
+      active: activeSnapshot,
+      queue: this.queue.slice(),
+      pending: this._pending.map(function (item) {
+        return { id: item.id, remaining: Math.max(0, item.at - now) };
+      })
+    };
+    this.store.data.suspended = this.suspended;
+    this.active = null;
+    this.queue = [];
+    this._pending = [];
+    this._resumedFromInterruption = null;
+    this._render(null);
+    this._start(frag, 0);
+    return true;
+  };
+
+  Engine.prototype._restoreSuspended = function () {
+    var saved = this.suspended;
+    if (!saved) return false;
+    this.suspended = null;
+    this.store.data.suspended = null;
+    this.queue = (saved.queue || []).slice();
+    var now = this._now();
+    this._pending = (saved.pending || []).map(function (item) {
+      return { id: item.id, at: now + Math.max(0, Number(item.remaining) || 0) };
+    });
+
+    var resume = saved.active;
+    var resumeFrag = resume && this.fragments[resume.id];
+    if (resumeFrag && this._eligible(resumeFrag)) {
+      this._resumedFromInterruption = { id: resume.id, by: saved.by };
+      this._start(resumeFrag, resume.at);
+      return true;
+    }
+    if (this.queue.length) {
+      var queued = this.fragments[this.queue.shift()];
+      if (queued && this._eligible(queued)) {
+        this._start(queued, 0);
+        return true;
+      }
+    }
+    this.store.data.resume = this._pending.length
+      ? { id: this._pending[0].id, at: 0 } : null;
+    this.store.save();
+    return true;
+  };
+
   Engine.prototype.leaveZone = function (zoneId) {
     var frag = this._fragmentForZone(zoneId);
     if (!frag) return;
+    // Persistent queues latch entry. Leaving cannot withdraw a queued voice or
+    // interrupt one that has already started.
+    if (this.defaults.positionalQueue === "persistent") return;
     var qi = this.queue.indexOf(frag.id);
     if (qi >= 0) this.queue.splice(qi, 1);
     if (this.active && this.active.frag.id === frag.id) {
@@ -308,6 +402,12 @@
     this.store.markPlayed(finishedId, state);
     this.active = null;
     this._render(null);
+
+    if (state === "complete" && this.suspended &&
+        this.suspended.by === finishedId) {
+      this._restoreSuspended();
+      return;
+    }
 
     // Sequential chains: schedule any `after` fragments keyed to this one.
     var frags = this.manifest.fragments || [];
@@ -525,18 +625,27 @@
     this.audio = {};        // fragmentId -> HTMLAudioElement
     this.bearings = {};     // entityName -> degrees (host-updated)
     this._endCbs = {};
+    this._boundAudio = [];
+    this._activeFragmentByAudio = [];
     this.wallClockBeforePlayback = opts.wallClockBeforePlayback !== false;
   }
   HtmlAudioAdapter.prototype.register = function (fragmentId, audioEl) {
     this.audio[fragmentId] = audioEl;
+    if (this._boundAudio.indexOf(audioEl) >= 0) return;
+    this._boundAudio.push(audioEl);
+    this._activeFragmentByAudio.push(null);
     var self = this;
     audioEl.addEventListener("ended", function () {
-      (self._endCbs[fragmentId] || []).forEach(function (cb) { cb(); });
+      var index = self._boundAudio.indexOf(audioEl);
+      var activeId = index >= 0 ? self._activeFragmentByAudio[index] : null;
+      (self._endCbs[activeId] || []).slice().forEach(function (cb) { cb(); });
     });
   };
   HtmlAudioAdapter.prototype.clock = function (fragmentId) {
     var a = this.audio[fragmentId];
     if (!a) return null;
+    var index = this._boundAudio.indexOf(a);
+    if (index >= 0) this._activeFragmentByAudio[index] = fragmentId;
     if (a.paused && a.currentTime === 0) {
       return this.wallClockBeforePlayback ? null : 0;
     }

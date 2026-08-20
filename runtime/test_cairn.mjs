@@ -269,6 +269,35 @@ test("positionalPreempts:false disables preemption scene-wide", () => {
   assert.deepEqual(eng.queue, ["gauge"]);
 });
 
+test("persistent positional queue latches entries through exit in FIFO order", () => {
+  const { eng, tick } = makePreemptEngine({ positionalQueue: "persistent" });
+  eng.notifyMovement();
+  tick(3.0);
+  eng.enterZone("waters-edge");
+  eng.leaveZone("waters-edge");
+  eng.enterZone("bell-tower");
+  eng.leaveZone("bell-tower");
+  assert.equal(eng.active.frag.id, "opener", "current narration keeps the floor");
+  assert.equal(eng.active.dismissAfterCue, false, "no cue-boundary preemption");
+  assert.deepEqual(eng.queue, ["gauge", "finale"], "exited zones stay latched FIFO");
+  tick(7.0);
+  assert.equal(eng.active.frag.id, "gauge", "first latched zone starts next");
+  tick(14.0);
+  assert.equal(eng.active.frag.id, "finale", "second latched zone follows");
+});
+
+test("persistent positional queue lets an active zone fragment finish after exit", () => {
+  const { eng, tick } = makePreemptEngine({ positionalQueue: "persistent" });
+  eng.enterZone("waters-edge");
+  tick(1.0);
+  eng.leaveZone("waters-edge");
+  tick(1.7);
+  assert.equal(eng.active.frag.id, "gauge", "zone exit does not dismiss playback");
+  tick(7.0);
+  assert.equal(eng.active, null, "fragment finishes normally");
+  assert.equal(eng.store.playedState("gauge"), "complete");
+});
+
 // ── Bell Tower production-hardening regressions ──────────────────────────────
 
 test("legacy Wayside state migrates forward without deleting rollback state", () => {
@@ -370,6 +399,142 @@ test("caption start checkpoints resume without a lifecycle event", () => {
   tick(6.2);
   eng.rememberProgress();
   assert.deepEqual(eng.store.data.resume, { id: "gauge", at: 2.5 });
+});
+
+test("shared HTML audio ended event advances exactly one queued fragment", () => {
+  const ended = [];
+  const audio = {
+    paused: false,
+    currentTime: 1,
+    addEventListener: (type, cb) => { if (type === "ended") ended.push(cb); }
+  };
+  const adapter = new Cairn.HtmlAudioAdapter({ wallClockBeforePlayback: false });
+  adapter.register("name", audio);
+  adapter.register("gauge", audio);
+  adapter.register("battle", audio);
+
+  const queueManifest = {
+    cairn: "0.1",
+    scene: "shared-audio-queue",
+    defaults: {
+      oneVoiceAtATime: true,
+      playOncePerVisit: true,
+      positionalQueue: "persistent"
+    },
+    fragments: [
+      { id: "name", trigger: { type: "first-move" } },
+      { id: "gauge", trigger: { type: "zone", zone: "gauge" } },
+      { id: "battle", trigger: { type: "zone", zone: "battle" } }
+    ]
+  };
+  const eng = new Cairn.Engine(queueManifest, adapter, { storage: fakeStorage() });
+  eng.notifyMovement();
+  eng.enterZone("gauge");
+  eng.enterZone("battle");
+  assert.equal(eng.active.frag.id, "name");
+  assert.deepEqual(eng.queue, ["gauge", "battle"]);
+
+  adapter.clock("name");
+  ended.forEach(cb => cb());
+  assert.equal(eng.active.frag.id, "gauge", "only Gauge starts when Name ends");
+  assert.deepEqual(eng.queue, ["battle"], "Battle remains queued");
+});
+
+test("exceptional interruption resumes the active fragment at its saved clock", () => {
+  let wall = 5;
+  const interruptionManifest = {
+    cairn: "0.1",
+    scene: "interrupt-active",
+    defaults: { playOncePerVisit: true },
+    fragments: [
+      { id: "firstgarden", trigger: { type: "first-move" } },
+      { id: "lantern", trigger: { type: "zone", zone: "lantern" } }
+    ]
+  };
+  const eng = new Cairn.Engine(interruptionManifest,
+    { clock: () => 4.25, bearing: () => null },
+    { storage: fakeStorage(), now: () => wall });
+  eng.notifyMovement();
+  assert.equal(eng.interruptWith("lantern", { at: 4.25 }), true);
+  assert.equal(eng.active.frag.id, "lantern");
+  assert.deepEqual(eng.store.data.suspended.active,
+    { id: "firstgarden", at: 4.25 });
+  wall = 42;
+  eng._finish("complete");
+  assert.equal(eng.active.frag.id, "firstgarden");
+  assert.equal(eng.active.resumeAt, 4.25);
+  assert.equal(eng.store.data.suspended, null);
+  assert.deepEqual(eng._resumedFromInterruption,
+    { id: "firstgarden", by: "lantern" });
+});
+
+test("exceptional interruption pauses and restores a sequential gap", () => {
+  let wall = 0;
+  const gapManifest = {
+    cairn: "0.1",
+    scene: "interrupt-gap",
+    defaults: { playOncePerVisit: true },
+    fragments: [
+      { id: "firstgarden", trigger: { type: "first-move" } },
+      { id: "exposition", trigger: { type: "after", fragment: "firstgarden", delay: 10 } },
+      { id: "lantern", trigger: { type: "zone", zone: "lantern" } }
+    ]
+  };
+  const eng = new Cairn.Engine(gapManifest,
+    { clock: () => null, bearing: () => null },
+    { storage: fakeStorage(), now: () => wall });
+  eng.notifyMovement();
+  eng._finish("complete");
+  wall = 4;
+  assert.equal(eng.interruptWith("lantern"), true);
+  assert.equal(eng.store.data.suspended.pending[0].remaining, 6);
+  wall = 40;
+  eng._finish("complete");
+  assert.equal(eng.active, null);
+  assert.equal(eng._pending[0].at, 46);
+  wall = 45.9; eng.tick();
+  assert.equal(eng.active, null);
+  wall = 46; eng.tick();
+  assert.equal(eng.active.frag.id, "exposition");
+});
+
+test("exceptional interruption survives reload and restores the suspended fragment", () => {
+  const values = {};
+  const storage = {
+    getItem: key => values[key] ?? null,
+    setItem: (key, value) => { values[key] = value; }
+  };
+  let wall = 0;
+  const manifest = {
+    cairn: "0.1",
+    scene: "interrupt-reload",
+    defaults: { playOncePerVisit: true },
+    fragments: [
+      { id: "firstgarden", trigger: { type: "first-move" } },
+      { id: "lantern", trigger: { type: "zone", zone: "lantern" } }
+    ]
+  };
+  const first = new Cairn.Engine(manifest,
+    { clock: () => 7.75, bearing: () => null },
+    { storage, now: () => wall });
+  first.notifyMovement();
+  assert.equal(first.interruptWith("lantern", { at: 7.75 }), true);
+  assert.equal(first.active.frag.id, "lantern");
+
+  wall = 5;
+  const reloaded = new Cairn.Engine(manifest,
+    { clock: () => 1.25, bearing: () => null },
+    { storage, now: () => wall });
+  reloaded.notifyMovement();
+  assert.equal(reloaded.active.frag.id, "lantern");
+  assert.equal(reloaded.active.resumeAt, 0);
+  assert.deepEqual(reloaded.store.data.suspended.active,
+    { id: "firstgarden", at: 7.75 });
+
+  reloaded._finish("complete");
+  assert.equal(reloaded.active.frag.id, "firstgarden");
+  assert.equal(reloaded.active.resumeAt, 7.75);
+  assert.equal(reloaded.store.data.suspended, null);
 });
 
 console.log(`\n${passed} tests passed`);

@@ -7,6 +7,7 @@
     "runtime/cairn.js",
     "runtime/cairn.css",
     "integrations/asm-html-audio.js",
+    "integrations/asm-mobile-viewport.js",
     "integrations/asm.css",
     "SPEC.md",
     "README.md",
