@@ -5,7 +5,7 @@
 #   ./encode-audio.sh master.wav [more.wav ...]      # encode alongside source
 #   OUT=path/to/dir ./encode-audio.sh *.wav          # encode into OUT
 #
-# Settings match the shipped Peachtree pattern: mono, 48kHz,
+# Production delivery defaults: mono, 48kHz,
 # Opus 64k (primary) + AAC-LC 96k (fallback for old Safari/kiosks).
 # Always feed this WAV/AIFF masters — never re-encode from lossy.
 set -uo pipefail

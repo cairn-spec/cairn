@@ -66,9 +66,12 @@ python3 tools/cairn_align.py script.txt whisper.json \
 npm install cairn-spec
 ```
 
-Open `demo/index.html` in a browser. Read `INTEGRATION.md` for real-scene
-wiring. The core is engine-agnostic: implement `clock()` and `bearing()`
-against any engine and the spec's behaviors come for free.
+The npm package exposes the CommonJS runtime through `require("cairn-spec")`.
+Read `INTEGRATION.md` for real-scene wiring. To run the interactive demo,
+clone this repository and open `demo/index.html`; the demo is repository-only
+and is deliberately not included in the npm tarball. The core is
+engine-agnostic: implement `clock()` and `bearing()` against any engine and the
+spec's behaviors come for free.
 
 ### Reference integrations
 

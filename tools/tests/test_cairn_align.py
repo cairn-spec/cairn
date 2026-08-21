@@ -58,7 +58,9 @@ class TestVttOutput(unittest.TestCase):
                 os.path.join(FIX, "transcript.txt"),
                 os.path.join(FIX, "whisper.json"),
                 vtt_path=vtt, cues_path=cues, **kw)
-            return caps, report, open(vtt).read(), json.load(open(cues))
+            with open(vtt, encoding="utf-8") as vtt_file, \
+                    open(cues, encoding="utf-8") as cues_file:
+                return caps, report, vtt_file.read(), json.load(cues_file)
 
     def test_header(self):
         _, _, vtt, _ = self._run()
@@ -126,7 +128,8 @@ class TestSrtPassthrough(unittest.TestCase):
                 os.path.join(FIX, "transcript.txt"),
                 os.path.join(FIX, "whisper.json"),
                 srt_path=srt, offset=3600.0)
-            text = open(srt).read()
+            with open(srt, encoding="utf-8") as srt_file:
+                text = srt_file.read()
             self.assertIn("01:00:0", text)
             self.assertIn(",", text.splitlines()[1])  # SRT keeps comma format
 

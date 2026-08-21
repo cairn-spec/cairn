@@ -24,7 +24,9 @@ starts the Cairn release.
       tests).
 - [ ] Run `npm run pack:check`; inspect the file list, version, size, and MIT
       metadata.
-- [ ] Confirm the tarball contains only generic Cairn names and examples.
+- [ ] Confirm the tarball contains no project-specific scene or ASM names.
+      Documented `wayside.*` state keys and the `Wayside` runtime alias are
+      intentional backward compatibility, not current branding.
 - [ ] Confirm `npm view cairn-spec version` still reports `0.1.1`; do not
       overwrite an unexpected newer version.
 - [ ] Run the independent reference deployment's own real-phone and desktop/Mac

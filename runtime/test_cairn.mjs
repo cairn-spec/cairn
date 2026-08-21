@@ -328,7 +328,7 @@ test("persistent positional queue lets an active zone fragment finish after exit
   assert.equal(eng.store.playedState("gauge"), "complete");
 });
 
-// ── Bell Tower production-hardening regressions ──────────────────────────────
+// ── Production-hardening regressions ────────────────────────────────────────
 
 test("legacy Wayside state migrates forward without deleting rollback state", () => {
   const values = {

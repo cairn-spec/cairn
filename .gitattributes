@@ -2,3 +2,6 @@
 # endings stable on every platform instead of applying core.autocrlf.
 tools/tests/fixtures/*.srt -text
 tools/tests/fixtures/*.vtt -text
+
+# Executable scripts must remain runnable after checkout on Windows.
+*.sh text eol=lf

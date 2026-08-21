@@ -12,10 +12,10 @@ controls time.
 
 ## 1. Why video captions don't transfer
 
-WebVTT and every caption system since broadcast assume: one media element, one
-monotonic timeline, one track, a passive viewer. A navigable scene violates
-all four. Audio starts when a visitor crosses a zone boundary; fragments can
-be interrupted by walking away, re-entered later, or never found at all;
+Conventional caption delivery generally assumes one media element, one
+monotonic timeline, one track, and a passive viewer. A navigable scene can
+violate all four. Audio starts when a visitor crosses a zone boundary;
+fragments can be interrupted by walking away, re-entered later, or never found;
 multiple sources coexist spatially; the "frame" is wherever the visitor
 looks. Captioning spatial media is not a smaller version of captioning video
 — it is a different problem with a video-shaped problem nested inside it.
@@ -231,9 +231,11 @@ is the reference, not the definition.
 | 2.2.1 timing adjustable | position-triggered; no forced pace |
 | 4.1.2 name/role/value | ARIA live region, real text |
 
-For museums and institutions, this converts splat experiences from
-"un-procurable on accessibility grounds" to "compliant by design" — a
-checkbox no current 3DGS tour product ticks.
+For museums and institutions, Cairn supplies reusable building blocks for
+several accessibility requirements introduced by narrated spatial media. It
+does not by itself make a page or application WCAG-conformant: conformance must
+be assessed across the complete experience, including its renderer, controls,
+navigation, content, and responsive variants.
 
 ## 8. Release status
 
