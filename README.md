@@ -19,7 +19,7 @@ still a complete experience.
 ## Layout
 
 ```
-SPEC.md               the v0.1 spec — model, manifest schema, normative behaviors
+SPEC.md               the v0.2 spec — model, manifest schema, normative behaviors
 tools/
   cairn_align.py    authoring: script + Whisper timings → VTT / cues / SRT
   align_srt.py        forced-alignment + segmentation engine (stdlib only)
@@ -27,17 +27,20 @@ tools/
 runtime/
   cairn.js          engine-agnostic core + HtmlAudio & PlayCanvas adapters
   cairn.css         WCAG-minded overlay styles
-  test_cairn.mjs    22 node tests over core + Bell pilot regressions
+  test_cairn.mjs    29 node tests over core + ASM production regressions
+  test_visit_memory.mjs  3 cross-load persistence tests
 integrations/
   asm-html-audio.js  reusable ASM browser-audio/gesture/replay host
   asm.css            ASM controls + responsive caption safe zones
-  test_asm_host.mjs  audio-source selection tests
+  test_asm_host.mjs  7 browser-audio and Safari viewport tests
 demo/
   index.html          double-click demo: zones as buttons, real pipeline output
 examples/
   oaklandbelltower.cairn.json deployed sequential-pilot manifest
   peachtreecreek.cairn.json   spatial-zone / PlayCanvas target manifest
 INTEGRATION.md        engine-side wiring guide (PlayCanvas first)
+CHANGELOG.md          release history and production-proven behaviors
+RELEASE_CHECKLIST.md  coordinated ASM/Cairn launch gate
 writeup/              the public announcement draft
 ```
 
@@ -56,17 +59,25 @@ python3 tools/cairn_align.py script.txt whisper.json \
 
 ## Runtime quickstart
 
+```bash
+npm install cairn-spec
+```
+
 Open `demo/index.html` in a browser. Read `INTEGRATION.md` for real-scene
 wiring. The core is engine-agnostic: implement `clock()` and `bearing()`
 against any engine and the spec's behaviors come for free.
 
 ## Status
 
-v0.1 draft. Proven: authoring pipeline (58 tests), core behaviors and Bell
-pilot regressions (22 node tests), three ASM host tests, file-URL demo, and
-the sequential HTML Audio integration in the live Oakland Bell Tower
-PlayCanvas-rendered splat scene. Not yet proven: direct PlayCanvas sound-slot
-adapter with positional zones (first target: Peachtree Creek), WebXR
-presentation, multi-language manifests.
+v0.2 release candidate. Production-proven across Atlanta Space Machine's
+native-Google aerial and 12 walkable scenes: sequential narration, persistent
+FIFO positional queues, cue-boundary reload resume, and one exceptional
+fade/interruption/resume encounter. Validation currently covers 29 core tests,
+3 cross-load visit-memory tests, 7 ASM-host tests, and 58 authoring tests.
 
-MIT (intended) — spec, runtime, and tools together.
+The generic direct PlayCanvas sound-slot adapter remains experimental; ASM's
+production integrations deliberately use one HTML Audio element while the
+scene engine supplies movement and zone events. WebXR presentation and
+multi-language manifests remain future work.
+
+MIT licensed — spec, runtime, integrations, examples, and tools.

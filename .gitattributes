@@ -1,0 +1,4 @@
+# Authoring fixtures are byte-for-byte contracts. Keep their repository line
+# endings stable on every platform instead of applying core.autocrlf.
+tools/tests/fixtures/*.srt -text
+tools/tests/fixtures/*.vtt -text

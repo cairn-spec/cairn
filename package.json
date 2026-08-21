@@ -1,6 +1,6 @@
 {
   "name": "cairn-spec",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Cairn — captions for spatial media. Zone-triggered, accessible captions and narration for walkable 3D scenes (gaussian splats, virtual tours) where the visitor's movement is the play head.",
   "main": "runtime/cairn.js",
   "files": [
@@ -10,6 +10,9 @@
     "integrations/asm-mobile-viewport.js",
     "integrations/asm.css",
     "SPEC.md",
+    "INTEGRATION.md",
+    "CHANGELOG.md",
+    "examples/*.json",
     "README.md",
     "LICENSE"
   ],
@@ -34,6 +37,7 @@
   },
   "homepage": "https://github.com/cairn-spec/cairn#readme",
   "scripts": {
-    "test": "node runtime/test_cairn.mjs && node integrations/test_asm_host.mjs"
+    "test": "node runtime/test_cairn.mjs && node runtime/test_visit_memory.mjs && node integrations/test_asm_host.mjs",
+    "pack:check": "npm pack --dry-run"
   }
 }

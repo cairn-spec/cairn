@@ -1,6 +1,6 @@
 # Cairn — captions for spatial media
 
-**A caption standard for walkable 3D scenes (3DGS and beyond), v0.1 draft**
+**A caption standard for walkable 3D scenes (3DGS and beyond), v0.2 release candidate**
 
 Named for the walker's cairn: stones stacked along a path, encountered by
 arriving, marking the way without pointing at anything — and added to by
@@ -228,20 +228,16 @@ For museums and institutions, this converts splat experiences from
 "un-procurable on accessibility grounds" to "compliant by design" — a
 checkbox no current 3DGS tour product ticks.
 
-## 8. Publication path
+## 8. Release status
 
-1. **Prove it on a live scene** — Peachtree Creek: audio already deployed,
-   zone integration already spec'd; captions ride the same handoff
-2. **Open the repo** — spec + PlayCanvas reference component + the
-   authoring toolchain, MIT
-3. **Write it up** — "Captions for gaussian splat scenes" aimed at the
-   radiancefields orbit; the accessibility framing carries it beyond the
-   splat community
-4. **Take the gap to PlayCanvas** — SuperSplat Studio has annotations and
-   no audio story at all; Cairn is a ready-made answer for an engine
-   that visibly hasn't thought about this yet
+Cairn v0.2 is production-proven in Atlanta Space Machine's native-Google
+aerial and 12 walkable scenes. The reference deployment covers ten sequential
+scenes, a persistent FIFO positional traversal, and a single exceptional
+encounter that fades, interrupts, survives reload, and resumes displaced
+narration. The open-source release remains coordinated with the ASM launch;
+see `RELEASE_CHECKLIST.md` for the publication gate.
 
-## 9. Open questions (v0.2 material)
+## 9. Open questions (v0.3 material)
 
 - Multi-language manifests (`captions` as a per-language map)
 - Speaker color/position conventions when scenes gain multiple narrators
