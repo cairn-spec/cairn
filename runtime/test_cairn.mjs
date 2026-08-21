@@ -196,6 +196,36 @@ test("first-move fires the opener exactly once", () => {
   assert.equal(eng.active.lastCue.text, "Welcome to Oakland Cemetery");
 });
 
+test("first movement does not auto-start a zones-only manifest", () => {
+  const manifest = {
+    cairn: "0.2",
+    scene: "zones-only",
+    defaults: { captions: "on" },
+    fragments: [
+      { id: "bridge", trigger: { type: "zone", zone: "bridge" } }
+    ]
+  };
+  const eng = new Cairn.Engine(manifest,
+    { clock: () => null, bearing: () => null },
+    { storage: fakeStorage(), now: () => 0 });
+  eng.loadCues("bridge", vtt);
+
+  eng.notifyMovement();
+  assert.equal(eng.active, null, "movement alone must not bypass zone grammar");
+  assert.deepEqual(eng.queue, []);
+
+  eng.enterZone("bridge");
+  assert.equal(eng.active.frag.id, "bridge", "the authored zone still starts it");
+
+  const recovery = new Cairn.Engine(manifest,
+    { clock: () => null, bearing: () => null },
+    { storage: fakeStorage(), now: () => 0 });
+  recovery.store.data.resume = { id: "retired-fragment", at: 0 };
+  recovery.notifyMovement();
+  assert.equal(recovery.active.frag.id, "bridge",
+    "an actual stale resume record retains the legacy recovery fallback");
+});
+
 test("after-chain: sequential playback with authored delay", () => {
   const { eng, tick } = makeChainEngine();
   eng.notifyMovement();

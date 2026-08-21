@@ -19,13 +19,17 @@ versioning for the runtime and integration contracts.
 - Safari visual-viewport bridge for stable mobile controls after browser chrome
   and privacy notices change the usable viewport.
 - Peachtree Creek positional-queue example and expanded integration QA contract.
+- A zones-only regression that keeps first movement from bypassing authored
+  zone triggers when no opener or legacy resume state exists.
 
 ### Changed
 
 - The npm package now includes the integration guide, changelog, examples, and
   mobile viewport integration.
-- The default test command now runs 29 core tests, 3 cross-load visit-memory
+- The default test command now runs 30 core tests, 3 cross-load visit-memory
   tests, and 7 ASM-host tests.
+- The spec now defines deliberate same-session re-entry as a restart and
+  persisted reload restoration as cue-boundary continuation.
 
 ### Proven in production
 

@@ -21,7 +21,7 @@ launch-day release.
 ## Final preflight
 
 - [ ] Pull `main` and confirm a clean worktree.
-- [ ] Run `npm test` (expected: 29 core + 3 visit-memory + 7 ASM-host).
+- [ ] Run `npm test` (expected: 30 core + 3 visit-memory + 7 ASM-host).
 - [ ] Run `python -m unittest discover -s tools/tests` (expected: 58 authoring
       tests).
 - [ ] Run `npm run pack:check`; inspect the file list, version, size, and MIT

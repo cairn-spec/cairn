@@ -177,6 +177,12 @@ Notes:
    continue to use the normal preemption or persistent-queue policies above.
 10. **Walk-away and re-entry.** Partial plays are recorded. Re-entry behavior
    follows `playOncePerVisit`; a partially-heard fragment re-offers itself.
+   Re-entering its zone during the same loaded session starts that fragment
+   from the beginning, treating the visitor's deliberate return as a fresh
+   listen. Reload restoration is different: when persisted partial/resume state
+   exists, the first navigation input restores the unfinished fragment at its
+   last saved cue boundary. This asymmetry is intentionalâ€”same-session return
+   restarts, while page/lifecycle interruption preserves continuity.
 11. **The transcript log.** Every completed cue accumulates into a readable,
    scrollable record for the session — captions as document, not vapor.
    Scenes MAY surface this as a diegetic object (a registry, a logbook).

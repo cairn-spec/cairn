@@ -223,8 +223,10 @@
         this._startOrQueue(frags[i]);
       }
     }
-    // Recover state written before cue-boundary resume existed.
-    if (!this.active && !this.queue.length) {
+    // Recover state written before cue-boundary resume existed. This fallback
+    // is only valid when a stale/ineligible resume record actually existed;
+    // without one, the manifest's trigger grammar remains authoritative.
+    if (resume && !this.active && !this.queue.length) {
       for (var j = 0; j < frags.length; j++) {
         if (this._eligible(frags[j])) {
           this._start(frags[j], 0);
