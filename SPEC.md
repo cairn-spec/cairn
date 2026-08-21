@@ -1,6 +1,7 @@
 # Cairn — captions for spatial media
 
-**A caption standard for walkable 3D scenes (3DGS and beyond), v0.2 release candidate**
+**The behaviors of cairn.js, written down — precisely enough that any
+engine can implement them. v0.2 release candidate.**
 
 Named for the walker's cairn: stones stacked along a path, encountered by
 arriving, marking the way without pointing at anything — and added to by

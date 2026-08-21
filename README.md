@@ -1,8 +1,10 @@
 # Cairn
 
-**Captions for spatial media** — walkable 3D scenes, gaussian splats, virtual
-tours: media with no master timeline, where the visitor's movement is the
-play head.
+**cairn.js is a caption library for walkable 3D scenes** — gaussian splats,
+virtual tours: media with no master timeline, where the visitor's movement
+is the play head. [SPEC.md](SPEC.md) is its behavior, written down —
+precisely enough that any engine can implement the same behaviors without
+this code.
 
 Named for the walker's cairn: stones stacked along a path, encountered on
 arrival, marking the way without pointing — each passing traveler adds one.
@@ -19,7 +21,7 @@ still a complete experience.
 ## Layout
 
 ```
-SPEC.md               the v0.2 spec — model, manifest schema, normative behaviors
+SPEC.md               the behavior, written down — model, manifest, normative rules
 tools/
   cairn_align.py    authoring: script + Whisper timings → VTT / cues / SRT
   align_srt.py        forced-alignment + segmentation engine (stdlib only)
