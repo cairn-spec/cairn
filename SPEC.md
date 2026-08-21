@@ -63,7 +63,7 @@ One manifest per scene binds the layers:
 ```json
 {
   "cairn": "0.1",
-  "scene": "peachtreecreek",
+  "scene": "riverside-trail",
   "defaults": {
     "captions": "on",
     "language": "en",
@@ -72,21 +72,21 @@ One manifest per scene binds the layers:
   },
   "fragments": [
     {
-      "id": "gauge",
-      "audio": ["audio/narrator_v1/gauge.opus", "audio/narrator_v1/gauge.m4a"],
-      "captions": "captions_v1/gauge.vtt",
+      "id": "bridge",
+      "audio": ["audio/narrator_v1/bridge.opus", "audio/narrator_v1/bridge.m4a"],
+      "captions": "captions_v1/bridge.vtt",
       "speaker": "Narrator",
       "kind": "narration",
-      "trigger": { "type": "zone", "zone": "waters-edge" },
-      "source": { "entity": "narrator-gauge" },
+      "trigger": { "type": "zone", "zone": "bridge" },
+      "source": { "entity": "narrator-bridge" },
       "interruption": "complete-cue"
     },
     {
-      "id": "creek-ambient",
-      "captions": "captions_v1/creek-ambient.vtt",
+      "id": "water-ambient",
+      "captions": "captions_v1/water-ambient.vtt",
       "kind": "ambience",
-      "trigger": { "type": "zone", "zone": "creek-corridor" },
-      "source": { "entity": "creek" }
+      "trigger": { "type": "zone", "zone": "river-corridor" },
+      "source": { "entity": "river" }
     }
   ]
 }
@@ -103,7 +103,7 @@ Notes:
   (see behavior 6). Default is preemptible.
 - `kind`: `narration` | `ambience` | `hint`. Ambience fragments may be
   caption-only (no audio file) — they describe what the scene sounds like:
-  `[creek over stones]`, `[birdsong, distant]`. This is how deaf visitors
+  `[water over stones]`, `[birdsong, distant]`. This is how deaf visitors
   receive the scene's sound design, not just its speech.
 - `source.entity` names the world-space origin of the voice. The runtime —
   never the author — computes the directional indicator from this.
@@ -130,7 +130,7 @@ Notes:
    narration, text is selectable, styling is CSS, WCAG contrast is
    controllable. Engine-drawn text is pixels; captions must be text.
 4. **Direction ticks are for located sound, not narrators.** By default,
-   only `ambience`-kind captions carry a direction indicator — `[creek
+   only `ambience`-kind captions carry a direction indicator — `[water
    over stones]` is genuinely *somewhere*, and that spatial information
    belongs to deaf visitors. Narration carries no tick: an acousmatic
    narrator's authority depends on coming from nowhere, and when narrator
@@ -236,12 +236,11 @@ checkbox no current 3DGS tour product ticks.
 
 ## 8. Release status
 
-Cairn v0.2 is production-proven in Atlanta Space Machine's native-Google
-aerial and 12 walkable scenes. The reference deployment covers ten sequential
-scenes, a persistent FIFO positional traversal, and a single exceptional
-encounter that fades, interrupts, survives reload, and resumes displaced
-narration. The open-source release remains coordinated with the ASM launch;
-see `RELEASE_CHECKLIST.md` for the publication gate.
+Cairn v0.2 is production-proven across an aerial experience and 12 walkable
+scenes. The reference deployment covers ten sequential scenes, a persistent
+FIFO positional traversal, and a single exceptional encounter that fades,
+interrupts, survives reload, and resumes displaced narration. See
+`RELEASE_CHECKLIST.md` for the publication gate.
 
 ## 9. Open questions (v0.3 material)
 

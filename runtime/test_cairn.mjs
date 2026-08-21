@@ -21,12 +21,12 @@ cairn-speaker: Narrator
 
 1
 00:00:00.000 --> 00:00:01.600
-Welcome to Oakland Cemetery
+Welcome to the garden
 
 2
 00:00:02.500 --> 00:00:06.100
-Founded in 1850 it became Atlanta's first
-public burial ground
+The path opens beside the old stone wall
+and continues toward the bridge
 `;
 
 test("parseVTT: cues and metadata", () => {
@@ -44,7 +44,7 @@ test("parseVTT: rejects non-VTT", () => {
 
 test("cueAt: inside, between, after", () => {
   const cues = Cairn.parseVTT(vtt).cues;
-  assert.equal(Cairn.cueAt(cues, 1.0).text, "Welcome to Oakland Cemetery");
+  assert.equal(Cairn.cueAt(cues, 1.0).text, "Welcome to the garden");
   assert.equal(Cairn.cueAt(cues, 2.0), null);      // between cues
   assert.equal(Cairn.cueAt(cues, 99), null);        // after all
 });
@@ -89,7 +89,7 @@ test("zone entry starts fragment; wall clock drives cues pre-gesture", () => {
   eng.enterZone("waters-edge");
   assert.ok(eng.active, "fragment active");
   tick(1.0);
-  assert.equal(eng.active.lastCue.text, "Welcome to Oakland Cemetery");
+  assert.equal(eng.active.lastCue.text, "Welcome to the garden");
 });
 
 test("one voice at a time: second zone queues, then plays after finish", () => {
@@ -142,7 +142,7 @@ test("transcript accumulates completed cues with speaker + kind", () => {
   tick(1.0); tick(3.0); tick(7.0);
   assert.ok(eng.transcript.length >= 2);
   assert.equal(eng.transcript[0].speaker, "Narrator");
-  assert.equal(eng.transcript[0].text, "Welcome to Oakland Cemetery");
+  assert.equal(eng.transcript[0].text, "Welcome to the garden");
 });
 
 test("audio clock preferred over wall clock when available", () => {
@@ -150,7 +150,7 @@ test("audio clock preferred over wall clock when available", () => {
   const { eng } = makeEngine(() => audioT);
   eng.enterZone("waters-edge");
   audioT = 3.0; eng.tick();
-  assert.match(eng.active.lastCue.text, /^Founded in 1850/);
+  assert.match(eng.active.lastCue.text, /^The path opens/);
 });
 
 test("toggle persists through store", () => {
@@ -193,7 +193,7 @@ test("first-move fires the opener exactly once", () => {
   eng.notifyMovement();                       // latch: no double-fire
   assert.equal(eng.active.frag.id, "opener");
   tick(1.0);
-  assert.equal(eng.active.lastCue.text, "Welcome to Oakland Cemetery");
+  assert.equal(eng.active.lastCue.text, "Welcome to the garden");
 });
 
 test("first movement does not auto-start a zones-only manifest", () => {
@@ -402,7 +402,7 @@ test("caption toggle redraws the current cue immediately", () => {
   let rendered = "not-called";
   eng._render = view => { rendered = view; };
   eng.toggle();
-  assert.equal(rendered.cue.text, "Welcome to Oakland Cemetery");
+  assert.equal(rendered.cue.text, "Welcome to the garden");
 });
 
 test("HTML Audio adapter can hold captions until playback starts", () => {

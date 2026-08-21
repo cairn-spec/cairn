@@ -1,39 +1,34 @@
 # Cairn 0.2.0 release checklist
 
-Cairn and Atlanta Space Machine launch as one public moment. Do not publish the
-npm package, create the final tag/release, or change repository visibility until
-ASM's bare production URLs pass the launch gate and Steve explicitly starts the
-launch-day release.
+Do not publish the npm package, create the final tag/release, or change
+repository visibility until the package passes this gate and Steve explicitly
+starts the Cairn release.
 
 ## Prepared state
 
 - [x] MIT license present with Steve Bransford copyright.
-- [x] Runtime/spec branch merged to `main` at `ef6a44c`.
+- [x] Runtime/spec changes merged to `main`.
 - [x] Package version prepared as `0.2.0`.
-- [x] README and spec describe the production-proven ASM topology.
+- [x] README and spec describe the production-proven behavior classes.
 - [x] Integration guide documents persistent queues and exceptional resume.
-- [x] Changelog covers the 0.2.0 runtime and host contracts.
-- [x] Package includes runtime, styles, ASM host, viewport bridge, spec,
-      integration guide, changelog, examples, README, and license.
-- [x] ASM bare-URL dependency and rendered desktop/phone regression passed on
-      2026-08-20.
+- [x] Changelog covers the 0.2.0 runtime and generic host contracts.
+- [x] Package includes runtime, styles, browser host, viewport bridge, spec,
+      integration guide, changelog, generic examples, README, and license.
+- [x] Independent production-reference regression passed on 2026-08-20.
 
 ## Final preflight
 
 - [ ] Pull `main` and confirm a clean worktree.
-- [ ] Run `npm test` (expected: 30 core + 3 visit-memory + 7 ASM-host).
+- [ ] Run `npm test` (expected: 30 core + 3 visit-memory + 7 host).
 - [ ] Run `python -m unittest discover -s tools/tests` (expected: 58 authoring
       tests).
 - [ ] Run `npm run pack:check`; inspect the file list, version, size, and MIT
       metadata.
+- [ ] Confirm the tarball contains only generic Cairn names and examples.
 - [ ] Confirm `npm view cairn-spec version` still reports `0.1.1`; do not
       overwrite an unexpected newer version.
-- [ ] Smoke `https://atlantaspacemachine.com/` and all 12 bare scene URLs on a
-      real phone and desktop/Mac, including one narration resume round trip.
-- [ ] Confirm portals remain visible and every Scenes-drawer return restores the
-      originating authored aerial fly-in.
-- [ ] Confirm the four preserved panorama URLs remain live but absent from the
-      ASM map and drawer.
+- [ ] Run the independent reference deployment's own real-phone and desktop/Mac
+      release gate, including one narration resume round trip.
 
 ## Launch-day publication
 
@@ -46,7 +41,7 @@ launch-day approval.
 3. Create and push the final annotated tag:
 
    ```bash
-   git tag -a v0.2.0 -m "Cairn 0.2.0 — ASM production release"
+   git tag -a v0.2.0 -m "Cairn 0.2.0"
    git push origin v0.2.0
    ```
 
@@ -58,13 +53,15 @@ launch-day approval.
 
 5. Verify `npm view cairn-spec version` reports `0.2.0`, then create the GitHub
    release from `v0.2.0` using the 0.2.0 changelog section.
-6. Publish the ASM and Cairn announcements together, linking the bare ASM aerial,
-   GitHub repository, npm package, and integration guide.
+6. Publish the Cairn announcement with the GitHub repository, npm package, and
+   integration guide. External reference artworks may link to Cairn on their
+   own schedules.
 
 ## Rollback / stop conditions
 
 - Stop if `main` differs from the reviewed release commit, tests fail, the npm
-  version is already occupied, or any bare ASM route fails its production smoke.
+  version is already occupied, or the independent reference deployment has an
+  unresolved Cairn integration failure.
 - npm versions cannot be overwritten. If publication succeeds but a defect is
   found, fix forward with `0.2.1`; do not attempt to replace `0.2.0`.
 - A GitHub visibility change is separate from npm publication. If either step

@@ -18,7 +18,8 @@ versioning for the runtime and integration contracts.
   and synchronized caption/audio clocks.
 - Safari visual-viewport bridge for stable mobile controls after browser chrome
   and privacy notices change the usable viewport.
-- Peachtree Creek positional-queue example and expanded integration QA contract.
+- Persistent-traversal positional-queue example and expanded integration QA
+  contract.
 - A zones-only regression that keeps first movement from bypassing authored
   zone triggers when no opener or legacy resume state exists.
 
@@ -27,16 +28,16 @@ versioning for the runtime and integration contracts.
 - The npm package now includes the integration guide, changelog, examples, and
   mobile viewport integration.
 - The default test command now runs 30 core tests, 3 cross-load visit-memory
-  tests, and 7 ASM-host tests.
+  tests, and 7 host-integration tests.
 - The spec now defines deliberate same-session re-entry as a restart and
   persisted reload restoration as cue-boundary continuation.
 
 ### Proven in production
 
-- Atlanta Space Machine's native-Google aerial and all 12 walkable scenes.
+- A production aerial experience and all 12 walkable scenes in its collection.
 - Ten sequential narration scenes with ten-second authored gaps.
-- South Peachtree Creek's four-zone persistent positional queue.
-- Japanese Garden at ABG's single exceptional lantern interruption.
+- A four-zone persistent positional queue.
+- A single exceptional object encounter that interrupts and resumes narration.
 
 ## 0.1.1 — 2026
 

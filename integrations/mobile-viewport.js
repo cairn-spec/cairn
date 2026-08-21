@@ -46,10 +46,10 @@
       lastWidth = size.width;
       lastHeight = size.height;
       doc.documentElement.style.setProperty(
-        "--asm-visual-viewport-height",
+        "--cairn-visual-viewport-height",
         size.height + "px"
       );
-      container.style.height = "var(--asm-visual-viewport-height)";
+      container.style.height = "var(--cairn-visual-viewport-height)";
       notifyRenderer();
       return true;
     }

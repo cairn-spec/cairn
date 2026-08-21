@@ -6,9 +6,9 @@
   "files": [
     "runtime/cairn.js",
     "runtime/cairn.css",
-    "integrations/asm-html-audio.js",
-    "integrations/asm-mobile-viewport.js",
-    "integrations/asm.css",
+    "integrations/html-audio-host.js",
+    "integrations/mobile-viewport.js",
+    "integrations/host.css",
     "SPEC.md",
     "INTEGRATION.md",
     "CHANGELOG.md",
@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/cairn-spec/cairn#readme",
   "scripts": {
-    "test": "node runtime/test_cairn.mjs && node runtime/test_visit_memory.mjs && node integrations/test_asm_host.mjs",
+    "test": "node runtime/test_cairn.mjs && node runtime/test_visit_memory.mjs && node integrations/test_host.mjs",
     "pack:check": "npm pack --dry-run"
   }
 }

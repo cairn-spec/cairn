@@ -1,41 +1,39 @@
-# Cairn integration guide — PlayCanvas / ASM scenes
+# Cairn integration guide — browser and PlayCanvas scenes
 
-For the engine-side implementer (Codex, per the ASM division of labor). This
-document assumes the positional-audio zone system from
-`NARRATION_INTEGRATION_HANDOFF.md` (Peachtree Creek) is in place — Cairn
-rides the same triggers and the same audio slots. Nothing here changes the
-audio behavior; captions are an additive layer.
+This guide covers Cairn's generic HTML Audio host and direct scene-engine
+wiring. If a project already has positional-audio zones, Cairn can ride the
+same triggers and audio players. Captions remain an additive layer.
 
 ## Files to ship per scene
 
 ```
 <scene>/
-  audio/narrator_v1/*.opus|*.m4a     (already deployed for peachtreecreek)
-  captions_v1/*.vtt                  (one per fragment — Steve's side generates)
-  cairn.json                       (manifest — see examples/peachtreecreek.cairn.json)
-  cairn.js + cairn.css           (runtime, immutable-cacheable)
-  asm-html-audio.js + asm.css     (optional ASM sequential-scene host)
+  audio/narrator_v1/*.opus|*.m4a
+  captions_v1/*.vtt                  (one per fragment)
+  cairn.json                         (manifest)
+  cairn.js + cairn.css               (runtime, immutable-cacheable)
+  html-audio-host.js + host.css      (optional compact browser host)
+  mobile-viewport.js                 (optional mobile layout stabilization)
 ```
 
 Caption files follow the same versioning rule as audio: revisions go to
 `captions_v2/`, never overwrite.
 
-## ASM sequential scenes — validated Bell Tower path
+## Compact sequential browser host
 
-Oakland Bell Tower is the first deployed Cairn-family pilot. It runs inside a
-PlayCanvas-rendered splat scene but deliberately uses one HTML Audio element,
-not PlayCanvas sound slots. The reusable integration in
-`integrations/asm-html-audio.js` carries forward the production-proven mobile
-audio unlock, Opus/AAC selection, cue-boundary resume, mute, replay, and
-fail-soft caption behavior:
+The production-proven browser integration deliberately uses one HTML Audio
+element, even when the visual scene is rendered by PlayCanvas or another 3D
+engine. `integrations/html-audio-host.js` provides mobile audio unlock,
+Opus/AAC selection, cue-boundary resume, mute, replay, and fail-soft caption
+behavior:
 
 ```html
 <link rel="stylesheet" href="cairn.css">
-<link rel="stylesheet" href="asm.css">
+<link rel="stylesheet" href="host.css">
 <script src="cairn.js"></script>
-<script src="asm-html-audio.js"></script>
+<script src="html-audio-host.js"></script>
 <script>
-CairnAsm.mount({
+CairnHost.mount({
   manifestUrl: "./cairn.json",
   volume: 0.8,
   resetParams: ["cairnReset", "waysideReset"]
@@ -45,15 +43,14 @@ CairnAsm.mount({
 </script>
 ```
 
-This host is the preferred ASM path for small `first-move` + `after` scenes.
-It migrates legacy `wayside.<scene>` and `asm.wayside.muted` state by copying
-it forward without deleting rollback state. ASM intentionally hides the
-generic transcript panel; captions, CC, and sound/replay are its visible
-presentation.
+This host is a compact path for small `first-move` + `after` scenes. It can
+migrate legacy `wayside.<scene>` and `wayside.muted` state by copying it
+forward without deleting rollback state. Its compact presentation hides the
+generic transcript panel while retaining captions, CC, and sound/replay.
 
 ### Shared HTML audio ownership
 
-The ASM host intentionally reuses one `<audio>` element while changing its
+The HTML Audio host intentionally reuses one `<audio>` element while changing its
 source between fragments. A shared player must have one physical `ended`
 listener, and that event must be routed only to the fragment currently owning
 playback. Never attach one unscoped `ended` listener per logical fragment to the
@@ -92,12 +89,12 @@ this.app.on("update", function () { engine.tick(); });
 
 ## Scene sizes — same runtime, different manifests
 
-- **Small** (Cator Spring class): `first-move` opener + an `after` chain
+- **Small**: `first-move` opener + an `after` chain
   with ~10s delays. No zones at all. See `examples/small-scene.cairn.json`.
 - **Medium**: chain + a few zones. Positional triggers preempt the chain at
   cue boundaries by default; the displaced segment re-offers.
-- **Large** (Peachtree, BeltLine): `first-move` opener + zones everywhere.
-  See `examples/peachtreecreek.cairn.json`.
+- **Large traversal**: `first-move` opener + zones throughout the route.
+  See `examples/persistent-traversal.cairn.json`.
 
 **Preemption contract:** a zone entered while another voice plays takes the
 floor at the current cue boundary — never mid-sentence. Protect authored
@@ -119,8 +116,8 @@ call `engine.interruptWith("lantern", { at: currentTime })`. Play the exceptiona
 fragment fully, then follow the engine's restored `active` fragment and
 `resumeAt` clock, fading that audio back in. If the encounter occurs during an
 `after` delay, Cairn pauses and restores the remaining delay automatically.
-The suspended fragment, queue, and delay state persist across reloads. The ASM
-HTML-audio host exposes the complete fade/state operation as
+The suspended fragment, queue, and delay state persist across reloads. The
+HTML Audio host exposes the complete fade/state operation as
 `controller.interruptWith(id, { fadeOutMs, fadeInMs })`.
 
 Call `enterZone` even when audio cannot start yet (pre-unlock): the engine
@@ -137,11 +134,12 @@ Call `engine.rememberProgress()` during page hide, and use the public
 `engine.resetVisit()` API for an explicit replay control. If a behavior
 seems missing, extend Cairn — don't fork caption logic into the scene.
 
-## Registry hooks (for the necklace structure, later)
+## State hooks
 
 `engine.store.playedState(id)` returns `null | "partial" | "complete"` and
-`engine.transcript` is the session log. The bead-completion registry reads
-these — no additional caption-side work is needed to support it.
+`engine.transcript` is the session log. Hosts may use these for navigation,
+progress UI, analytics, or accessibility surfaces without duplicating playback
+state.
 
 ## QA checklist
 
@@ -162,6 +160,6 @@ these — no additional caption-side work is needed to support it.
 - [ ] CC toggle persists across reload (localStorage `cairn.<scene>`)
 - [ ] Legacy `wayside.<scene>` state copies forward without being deleted
 - [ ] Generic integrations: transcript panel accumulates and scrolls
-- [ ] ASM integrations: no transcript control or panel is exposed
+- [ ] Compact host: no transcript control or panel is exposed
 - [ ] VoiceOver/NVDA announce cue text (ARIA live region)
 - [ ] Contrast ≥ 7:1 at default styles on the brightest scene background

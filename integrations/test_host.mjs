@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const CairnAsm = require("./asm-html-audio.js");
-const MobileViewport = require("./asm-mobile-viewport.js");
+const CairnHost = require("./html-audio-host.js");
+const MobileViewport = require("./mobile-viewport.js");
 
 let passed = 0;
 function test(name, fn) {
@@ -27,7 +27,7 @@ const fragment = {
 test("chooses Opus when the browser supports it", () => {
   const audio = { canPlayType: () => "probably" };
   assert.equal(
-    CairnAsm.firstPlayable(fragment, audio),
+    CairnHost.firstPlayable(fragment, audio),
     "audio/narrator_v1/opener.opus"
   );
 });
@@ -35,7 +35,7 @@ test("chooses Opus when the browser supports it", () => {
 test("falls back to AAC/M4A when Opus is unavailable", () => {
   const audio = { canPlayType: () => "" };
   assert.equal(
-    CairnAsm.firstPlayable(fragment, audio),
+    CairnHost.firstPlayable(fragment, audio),
     "audio/narrator_v1/opener.m4a"
   );
 });
@@ -43,7 +43,7 @@ test("falls back to AAC/M4A when Opus is unavailable", () => {
 test("returns the first source when no preferred extension exists", () => {
   const audio = { canPlayType: () => "" };
   assert.equal(
-    CairnAsm.firstPlayable({ audio: ["voice.mp3"] }, audio),
+    CairnHost.firstPlayable({ audio: ["voice.mp3"] }, audio),
     "voice.mp3"
   );
 });
@@ -52,7 +52,7 @@ test("consumes reset parameters without dropping other query state", () => {
   let replaced = null;
   const win = {
     location: {
-      pathname: "/oaklandbelltower/",
+      pathname: "/scene/",
       hash: "#view"
     },
     history: {
@@ -63,17 +63,17 @@ test("consumes reset parameters without dropping other query state", () => {
   const params = new URLSearchParams(
     "stats=true&cairnReset=1&waysideReset=1"
   );
-  const clean = CairnAsm.consumeResetParams(
+  const clean = CairnHost.consumeResetParams(
     win, params, ["cairnReset", "waysideReset"]
   );
-  assert.equal(clean, "/oaklandbelltower/?stats=true#view");
+  assert.equal(clean, "/scene/?stats=true#view");
   assert.equal(replaced.url, clean);
   assert.deepEqual(replaced.state, { keep: true });
 });
 
 test("holds the caption clock at the saved cue while audio seeks on reload", () => {
   let audioTime = 0;
-  const gate = CairnAsm.createResumeClockGate(() => audioTime);
+  const gate = CairnHost.createResumeClockGate(() => audioTime);
   gate.hold("wave", 12.5);
   assert.equal(gate.clock("wave"), 12.5);
   assert.equal(gate.clock("designer"), 0);
@@ -90,11 +90,11 @@ test("requires an explicit resume tap only for unfinished saved progress", () =>
       playedState: () => null
     }
   };
-  assert.equal(CairnAsm.hasUnfinishedResume(engine), true);
+  assert.equal(CairnHost.hasUnfinishedResume(engine), true);
   engine.store.playedState = () => "complete";
-  assert.equal(CairnAsm.hasUnfinishedResume(engine), false);
+  assert.equal(CairnHost.hasUnfinishedResume(engine), false);
   engine.store.data.resume = null;
-  assert.equal(CairnAsm.hasUnfinishedResume(engine), false);
+  assert.equal(CairnHost.hasUnfinishedResume(engine), false);
 });
 
 test("resynchronizes the render surface when Safari's visual viewport grows", () => {
@@ -126,13 +126,13 @@ test("resynchronizes the render surface when Safari's visual viewport grows", ()
   };
 
   MobileViewport.install(win);
-  assert.equal(properties["--asm-visual-viewport-height"], "520px");
-  assert.equal(container.style.height, "var(--asm-visual-viewport-height)");
+  assert.equal(properties["--cairn-visual-viewport-height"], "520px");
+  assert.equal(container.style.height, "var(--cairn-visual-viewport-height)");
 
   win.visualViewport.height = 666;
   viewportListeners.resize();
-  assert.equal(properties["--asm-visual-viewport-height"], "666px");
+  assert.equal(properties["--cairn-visual-viewport-height"], "666px");
   assert.equal(resizeEvents, 2);
 });
 
-console.log("\n" + passed + " ASM host tests passed");
+console.log("\n" + passed + " host tests passed");

@@ -1,6 +1,6 @@
-/* Cairn ASM HTML Audio host.
+/* Cairn HTML Audio host.
  *
- * Reusable integration extracted from the accepted Oakland Bell Tower pilot.
+ * Reusable production-hardened browser integration.
  * Cairn owns captions and scene state; this host owns browser audio delivery,
  * user-gesture unlocking, mute/replay controls, and lifecycle persistence.
  */
@@ -8,7 +8,7 @@
   if (typeof module === "object" && module.exports) {
     module.exports = factory(require("../runtime/cairn.js"));
   } else {
-    root.CairnAsm = factory(root.Cairn);
+    root.CairnHost = factory(root.Cairn);
   }
 })(typeof self !== "undefined" ? self : this, function (Cairn) {
   "use strict";
@@ -92,8 +92,8 @@
     var doc = options.document || win.document;
     var storage = options.storage || win.localStorage;
     var movementKeys = new Set(options.movementKeys || DEFAULT_KEYS);
-    var muteKey = options.muteKey || "asm.cairn.muted";
-    var legacyMuteKey = options.legacyMuteKey || "asm.wayside.muted";
+    var muteKey = options.muteKey || "cairn.host.muted";
+    var legacyMuteKey = options.legacyMuteKey || "wayside.muted";
     var resetParams = options.resetParams || ["cairnReset", "waysideReset"];
     var params = new URLSearchParams(win.location.search);
     var resetRequested = resetParams.some(function (key) {
@@ -146,10 +146,10 @@
     var engine = new Cairn.Engine(manifest, adapter).attach(
       options.parent || doc.body
     );
-    engine.dom.wrap.classList.add("cairn-asm");
+    engine.dom.wrap.classList.add("cairn-host");
     var resumeNeedsTap = hasUnfinishedResume(engine);
 
-    // ASM intentionally presents captions without an in-scene transcript UI.
+    // The compact host presents captions without an in-scene transcript UI.
     if (engine.dom.transcriptBtn) engine.dom.transcriptBtn.hidden = true;
     if (engine.dom.transcript) engine.dom.transcript.hidden = true;
 
@@ -275,7 +275,7 @@
         } catch (error) {
           resumeClock.release(fragmentId);
           if (options.debug) {
-            console.error("[Cairn ASM] Resume seek failed for " + fragmentId,
+            console.error("[Cairn Host] Resume seek failed for " + fragmentId,
               error);
           }
         }
@@ -294,7 +294,7 @@
           failedId = fragment.id;
           markAudioState("blocked");
           if (options.debug) {
-            console.error("[Cairn ASM] Playback failed for " + fragment.id, error);
+            console.error("[Cairn Host] Playback failed for " + fragment.id, error);
           }
         });
       }
@@ -339,7 +339,7 @@
         failedId = fragment.id;
         markAudioState("missing");
         if (options.debug) {
-          console.error("[Cairn ASM] No audio source for " + fragment.id);
+          console.error("[Cairn Host] No audio source for " + fragment.id);
         }
         return;
       }

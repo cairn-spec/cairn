@@ -1,0 +1,70 @@
+{
+  "cairn": "0.1",
+  "scene": "persistent-traversal-template",
+  "defaults": {
+    "captions": "on",
+    "language": "en",
+    "oneVoiceAtATime": true,
+    "playOncePerVisit": true,
+    "positionalQueue": "persistent"
+  },
+  "fragments": [
+    {
+      "id": "opener",
+      "audio": ["audio/narrator_v1/opener.opus", "audio/narrator_v1/opener.m4a"],
+      "captions": "captions_v1/opener.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "first-move" },
+      "source": { "entity": "narrator-opener" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "overlook",
+      "audio": ["audio/narrator_v1/overlook.opus", "audio/narrator_v1/overlook.m4a"],
+      "captions": "captions_v1/overlook.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "overlook" },
+      "source": { "entity": "narrator-overlook" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "bridge",
+      "audio": ["audio/narrator_v1/bridge.opus", "audio/narrator_v1/bridge.m4a"],
+      "captions": "captions_v1/bridge.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "bridge" },
+      "source": { "entity": "narrator-bridge" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "crossing",
+      "audio": ["audio/narrator_v1/crossing.opus", "audio/narrator_v1/crossing.m4a"],
+      "captions": "captions_v1/crossing.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "crossing" },
+      "source": { "entity": "narrator-crossing" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "vista",
+      "audio": ["audio/narrator_v1/vista.opus", "audio/narrator_v1/vista.m4a"],
+      "captions": "captions_v1/vista.vtt",
+      "speaker": "Narrator",
+      "kind": "narration",
+      "trigger": { "type": "zone", "zone": "vista" },
+      "source": { "entity": "narrator-vista" },
+      "interruption": "complete-cue"
+    },
+    {
+      "id": "corridor-ambient",
+      "captions": "captions_v1/corridor-ambient.vtt",
+      "kind": "ambience",
+      "trigger": { "type": "zone", "zone": "corridor" },
+      "source": { "entity": "ambient-source" }
+    }
+  ]
+}

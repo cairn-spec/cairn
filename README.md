@@ -27,20 +27,21 @@ tools/
 runtime/
   cairn.js          engine-agnostic core + HtmlAudio & PlayCanvas adapters
   cairn.css         WCAG-minded overlay styles
-  test_cairn.mjs    30 node tests over core + ASM production regressions
+  test_cairn.mjs    30 node tests over core + production regressions
   test_visit_memory.mjs  3 cross-load persistence tests
 integrations/
-  asm-html-audio.js  reusable ASM browser-audio/gesture/replay host
-  asm.css            ASM controls + responsive caption safe zones
-  test_asm_host.mjs  7 browser-audio and Safari viewport tests
+  html-audio-host.js reusable browser-audio/gesture/replay host
+  mobile-viewport.js Safari visual-viewport stabilization
+  host.css           compact controls + responsive caption safe zones
+  test_host.mjs      7 browser-audio and viewport tests
 demo/
   index.html          double-click demo: zones as buttons, real pipeline output
 examples/
-  oaklandbelltower.cairn.json deployed sequential-pilot manifest
-  peachtreecreek.cairn.json   spatial-zone / PlayCanvas target manifest
+  small-scene.cairn.json          sequential narration template
+  persistent-traversal.cairn.json spatial-zone FIFO template
 INTEGRATION.md        engine-side wiring guide (PlayCanvas first)
 CHANGELOG.md          release history and production-proven behaviors
-RELEASE_CHECKLIST.md  coordinated ASM/Cairn launch gate
+RELEASE_CHECKLIST.md  publication gate
 writeup/              the public announcement draft
 ```
 
@@ -67,26 +68,25 @@ Open `demo/index.html` in a browser. Read `INTEGRATION.md` for real-scene
 wiring. The core is engine-agnostic: implement `clock()` and `bearing()`
 against any engine and the spec's behaviors come for free.
 
-### Production reference integrations
+### Reference integrations
 
-The npm package intentionally ships `integrations/asm-html-audio.js`,
-`asm-mobile-viewport.js`, and `asm.css` under their honest ASM names. They are
-the production host and presentation layer from **Atlanta Space Machine**, the
-reference artwork launching with Cairn 0.2.0â€”not requirements of the generic
-runtime. Other projects may use them as documented examples, adapt them, or
-depend only on `runtime/cairn.js` and `runtime/cairn.css`.
+The npm package ships a generic HTML Audio host, mobile viewport bridge, and
+compact responsive presentation layer. They are optional reference
+integrations, not requirements of the core runtime. Projects may use them as
+documented examples, adapt them, or depend only on `runtime/cairn.js` and
+`runtime/cairn.css`.
 
 ## Status
 
-v0.2 release candidate. Production-proven across Atlanta Space Machine's
-native-Google aerial and 12 walkable scenes: sequential narration, persistent
-FIFO positional queues, cue-boundary reload resume, and one exceptional
-fade/interruption/resume encounter. Validation currently covers 30 core tests,
-3 cross-load visit-memory tests, 7 ASM-host tests, and 58 authoring tests.
+v0.2 release candidate. Production-proven across an aerial experience and 12
+walkable scenes: sequential narration, persistent FIFO positional queues,
+cue-boundary reload resume, and one exceptional fade/interruption/resume
+encounter. Validation currently covers 30 core tests, 3 cross-load visit-memory
+tests, 7 host tests, and 58 authoring tests.
 
-The generic direct PlayCanvas sound-slot adapter remains experimental; ASM's
-production integrations deliberately use one HTML Audio element while the
-scene engine supplies movement and zone events. WebXR presentation and
+The generic direct PlayCanvas sound-slot adapter remains experimental. The
+production-proven browser host deliberately uses one HTML Audio element while
+the scene engine supplies movement and zone events. WebXR presentation and
 multi-language manifests remain future work.
 
 MIT licensed — spec, runtime, integrations, examples, and tools.
