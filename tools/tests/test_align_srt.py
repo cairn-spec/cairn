@@ -70,10 +70,10 @@ class TestNormalize(unittest.TestCase):
         self.assertEqual(normalize("end."), "end")
 
     def test_keeps_apostrophe(self):
-        self.assertEqual(normalize("Atlanta's"), "atlanta's")
+        self.assertEqual(normalize("region's"), "region's")
 
     def test_keeps_numbers(self):
-        self.assertEqual(normalize("1850"), "1850")
+        self.assertEqual(normalize("1950"), "1950")
 
     def test_collapses_whitespace(self):
         self.assertEqual(normalize("  hello  world  "), "hello world")
@@ -166,23 +166,23 @@ class TestLoadTranscript(unittest.TestCase):
 
     def test_comma_not_sent_end(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = self._write("1850, it", tmp)
+            path = self._write("1950, it", tmp)
             words = load_transcript(path)
         self.assertFalse(words[0].sent_end)
-        self.assertEqual(words[0].surface, "1850")
+        self.assertEqual(words[0].surface, "1950")
 
     def test_apostrophe_preserved(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = self._write("Atlanta's", tmp)
+            path = self._write("region's", tmp)
             words = load_transcript(path)
-        self.assertEqual(words[0].surface, "Atlanta's")
-        self.assertEqual(words[0].norm, "atlanta's")
+        self.assertEqual(words[0].surface, "region's")
+        self.assertEqual(words[0].norm, "region's")
 
     def test_norm_computed(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = self._write("Cemetery.", tmp)
+            path = self._write("Trail.", tmp)
             words = load_transcript(path)
-        self.assertEqual(words[0].norm, "cemetery")
+        self.assertEqual(words[0].norm, "trail")
 
 
 # ── align ─────────────────────────────────────────────────────────────────────
@@ -217,9 +217,9 @@ class TestAlign(unittest.TestCase):
         # Transcript has "the beautiful" that whisper doesn't
         twords = [self._tw("Welcome"), self._tw("to"),
                   self._tw("the"), self._tw("beautiful"),
-                  self._tw("Oakland"), self._tw("Cemetery", sent_end=True)]
+                  self._tw("Riverside"), self._tw("Trail", sent_end=True)]
         wwords = [self._ww("Welcome", 0.0, 0.5), self._ww("to", 0.5, 0.65),
-                  self._ww("Oakland", 0.9, 1.3), self._ww("Cemetery", 1.3, 1.8)]
+                  self._ww("Riverside", 0.9, 1.3), self._ww("Trail", 1.3, 1.8)]
         aligned, report = align(twords, wwords)
         self.assertAlmostEqual(report["coverage"], round(4 / 6, 4))
         self.assertEqual(report["matched_words"], 4)
@@ -373,7 +373,7 @@ class TestIntegration(unittest.TestCase):
             _, report = run_pipeline(self.transcript, self.whisper,
                                      srt_path, report_path=rep_path)
             self.assertEqual(report["coverage"], 1.0)
-            self.assertEqual(report["matched_words"], 22)
+            self.assertEqual(report["matched_words"], 23)
             self.assertEqual(report["interpolated_words"], 0)
             self.assertEqual(report["unmatched_passages"], [])
             self.assertEqual(report["caption_count"], 3)

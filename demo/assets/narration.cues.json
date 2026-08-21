@@ -1,0 +1,23 @@
+{
+  "cairn": "0.1",
+  "fragment": "trail-demo",
+  "speaker": "Narrator",
+  "kind": "narration",
+  "cues": [
+    {
+      "start": 0.0,
+      "end": 2.2,
+      "text": "Welcome to Riverside Trail"
+    },
+    {
+      "start": 2.5,
+      "end": 7.1,
+      "text": "Opened in 1950 it became the region's first\npublic nature walk"
+    },
+    {
+      "start": 7.4,
+      "end": 11.0,
+      "text": "The woodland path design remains\nlargely unchanged today"
+    }
+  ]
+}
