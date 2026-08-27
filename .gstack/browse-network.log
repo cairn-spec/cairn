@@ -1,4 +1,0 @@
-[2026-08-27T00:50:12.241Z] GET http://127.0.0.1:8761/demo/index.html → 200 (7ms, 5142B)
-[2026-08-27T00:50:12.253Z] GET http://127.0.0.1:8761/runtime/cairn.css → 200 (1ms, 3295B)
-[2026-08-27T00:50:12.253Z] GET http://127.0.0.1:8761/runtime/cairn.js → 200 (82ms, 28026B)
-[2026-08-27T00:50:12.335Z] GET http://127.0.0.1:8761/demo/assets/demo.wav → 200 (55ms, 526906B)
