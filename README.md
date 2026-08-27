@@ -9,6 +9,10 @@ this code.
 Named for the walker's cairn: stones stacked along a path, encountered on
 arrival, marking the way without pointing — each passing traveler adds one.
 
+**See it live:** [Atlanta Space Machine](https://atlantaspacemachine.com) —
+twelve narrated, captioned, walkable gaussian-splat scenes of Atlanta, plus
+an aerial. The reference deployment this runtime was production-hardened in.
+
 ## The idea in three sentences
 
 Video captions assume one clock; a walkable scene has none. Cairn splits
@@ -83,7 +87,8 @@ documented examples, adapt them, or depend only on `runtime/cairn.js` and
 
 ## Status
 
-v0.2 release candidate. Production-proven across an aerial experience and 12
+v0.2 release candidate. Production-proven across
+[Atlanta Space Machine](https://atlantaspacemachine.com)'s aerial and 12
 walkable scenes: sequential narration, persistent FIFO positional queues,
 cue-boundary reload resume, and one exceptional fade/interruption/resume
 encounter. Validation currently covers 30 core tests, 3 cross-load visit-memory
