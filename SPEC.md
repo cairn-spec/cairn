@@ -63,7 +63,7 @@ One manifest per scene binds the layers:
 
 ```json
 {
-  "cairn": "0.1",
+  "cairn": "0.2",
   "scene": "riverside-trail",
   "defaults": {
     "captions": "on",
