@@ -1,4 +1,4 @@
-/* Cairn v0.1 — captions for spatial media.
+/* Cairn v0.2 — captions for spatial media.
  *
  * Engine-agnostic core + adapters. The core knows nothing about PlayCanvas,
  * three.js, or audio APIs; it consumes a manifest, cue lists, and an adapter

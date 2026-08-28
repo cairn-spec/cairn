@@ -1,7 +1,7 @@
 {
   "name": "cairn-spec",
-  "version": "0.2.0",
-  "description": "Cairn — captions for spatial media. Zone-triggered, accessible captions and narration for walkable 3D scenes (gaussian splats, virtual tours) where the visitor's movement is the play head.",
+  "version": "0.2.1",
+  "description": "Cairn \u2014 captions for spatial media. Zone-triggered, accessible captions and narration for walkable 3D scenes (gaussian splats, virtual tours) where the visitor's movement is the play head.",
   "main": "runtime/cairn.js",
   "files": [
     "runtime/cairn.js",
